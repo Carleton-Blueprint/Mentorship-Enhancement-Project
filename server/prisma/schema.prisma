@@ -12,3 +12,18 @@ model Class {
   course_code String @unique
   course_name String 
 }
+
+model Mentor { 
+  mentor_id Int @id @default(autoincrement())
+  name String 
+  email_address String
+  year Int
+  Program String
+}
+
+model MentorAvailability {
+  id Int @id @default(autoincrement())
+  mentor_id Int @unique
+  end_time DateTime
+  start_time DateTime
+}
