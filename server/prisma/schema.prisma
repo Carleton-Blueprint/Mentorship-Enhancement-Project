@@ -27,3 +27,17 @@ model MentorAvailability {
   end_time DateTime
   start_time DateTime
 }
+
+model Student {
+  student_id      Int      @id @default(autoincrement())
+  student_number  Int      @unique
+  first_name      String
+  last_name       String
+}
+
+model StudentAvailability {
+  id          Int       @id @default(autoincrement())
+  student_id  Int       @unique
+  start_time  DateTime
+  end_time    DateTime
+}
