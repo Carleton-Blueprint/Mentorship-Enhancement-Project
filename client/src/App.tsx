@@ -54,7 +54,7 @@ function App() {
               </svg>
             </div>
 
-            {menuExpanded ? '' : <Button className="">Bulk Add (CSV)</Button>}
+            {menuExpanded ? '' : <Button className="bulk-add">Bulk Add (CSV)</Button>}
             {menuExpanded ? <AddStudentCard /> : ''}
           </TabsContent>
           <TabsContent value="mentor">

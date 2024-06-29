@@ -144,7 +144,7 @@ function AddStudentCard() {
                     <FormControl><p>TABLE</p></FormControl>
                     <FormMessage /></FormItem>)} /></div>
           </div>
-          <Button type="submit">Submit</Button>
+          <Button className="confirm" type="submit">Confirm</Button>
         </form>
       </div>
     </Form>
