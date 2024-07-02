@@ -11,10 +11,10 @@ type AvailabilityTableProps = {
 
 const AvailabilityTable: React.FC<AvailabilityTableProps> = ({ form, availability, setAvailability }) => {
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-  const timeslots = ['10:00 - 10:30 AM', '10:30 - 11:00 AM', '11:00 - 11:30 AM',
-    '11:30 - 12:00 PM', '12:00 - 12:30 PM', '12:30 - 1:00 PM',
-    '1:00 - 1:30 PM', '1:30 - 2:00 PM', '2:00 - 2:30 PM',
-    '2:30 - 3:00 PM', '3:00 - 3:30 PM', '3:30 - 4:00 PM'];
+  const timeslots = ['10:00 -\n10:30 AM', '10:30 -\n11:00 AM', '11:00 -\n11:30 AM',
+    '11:30 -\n12:00 PM', '12:00 -\n12:30 PM', '12:30 -\n1:00 PM',
+    '1:00 -\n1:30 PM', '1:30 -\n2:00 PM', '2:00 -\n2:30 PM',
+    '2:30 -\n3:00 PM', '3:00 -\n3:30 PM', '3:30 -\n4:00 PM'];
 
   // useEffect(() => {
   //   for (let i = 0; i < daysOfWeek.length; i++) {
