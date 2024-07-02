@@ -27,7 +27,7 @@ function App() {
 
   function manageEntityClicked(): void {
     setManageStudents(!manageStudents);
-    // TO DO
+    // TO DO, determines if students or mentors are being managed
   }
 
   return (

@@ -40,10 +40,12 @@
     --border: 240 5.9% 90%;
 
     /* Border color for inputs such as <Input />, <Select />, <Textarea /> */
-    --input: 240 5.9% 90%;
+    /* --input: 240 5.9% 90%; */
+    --input: 0 0% 85%; /*#D9D9D9*/
 
     /* Used for focus ring */
-    --ring: 346.8 77.2% 49.8%;
+    /* --ring: 346.8 77.2% 49.8%; */
+    --ring: 0 0% 58%; /*#949494*/
 
     /* Border radius for card, input and buttons */
     --radius: 0.5rem;

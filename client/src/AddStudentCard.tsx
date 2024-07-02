@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
 import { Button } from './components/ui/button';
-import { Card, CardContent } from './components/ui/card';
-import { Label } from './components/ui/label';
 import { Input } from './components/ui/input';
 import {
   Select,
@@ -11,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select"
-import { Badge } from "./components/ui/badge";
 import {
   Form,
   FormControl,
@@ -25,23 +22,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { FormSchema } from "./schema/studentForm";
+import { FormSchema } from "./schemas/studentForm";
+import CourseInput from './CourseInput';
+import AvailabilityTable from './AvailabilityTable';
 
 function AddStudentCard() {
-  type Course = {
-    courseCode: string;
-    courseName: string;
-  }
+  const [courses, setCourses] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<boolean[][]>([[]]);
+  // INDECIDED FORMAT FOR AVAILABILITY
 
-  // const [courseList, setCourseList] = useState<Course[]>([]);
-  // setCourseList([...courseList, { courseCode: 'CSC108', courseName: 'Intro to Programming' }]);
-  // setCourseList([...courseList, { courseCode: 'CSC148', courseName: 'Intro to Science' }]);
-  
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   });
 
   function onSubmit(values: z.infer<typeof FormSchema>) {
+    values.courses = courses // bypass zod validation for now
     // Do something with the form values.
     console.log(values)
   }
@@ -57,31 +52,35 @@ function AddStudentCard() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="required"><FormLabel>Student Name</FormLabel></div>
-                    <FormControl><Input placeholder="Blueprint" {...field} /></FormControl>
+                    <FormControl><Input {...field} /></FormControl>
                     <div className="form-details"><FormDescription>First</FormDescription></div>
-                    <FormMessage /></FormItem>)}/></div>
-            <div className="form-field space-y-1 w-full self-end">
+                    <FormMessage /></FormItem>)} />
+            </div>
+            <div className="form-field space-y-1 w-full">
               <FormField
                 control={form.control} name="lastName"
                 render={({ field }) => (
-                  <FormItem><FormLabel></FormLabel>
-                    <FormControl><Input placeholder="McBlueprint Face" {...field} /></FormControl>
+                  <FormItem><FormLabel> </FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
                     <div className="form-details"><FormDescription>Last</FormDescription></div>
-                    <FormMessage /></FormItem>)}/></div>
+                    <FormMessage /></FormItem>)} />
+            </div>
             <div className="form-field space-y-1 w-full">
               <FormField
                 control={form.control} name="preferredName"
                 render={({ field }) => (
                   <FormItem><FormLabel>Preferred Name</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
-                    <FormMessage /></FormItem>)}/></div>
+                    <FormMessage /></FormItem>)} />
+            </div>
             <div className="form-field space-y-1 w-2/5">
               <FormField
                 control={form.control} name="preferredPronouns"
                 render={({ field }) => (
                   <FormItem><FormLabel>Preferred Pronouns</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
-                    <FormMessage /></FormItem>)}/></div>
+                    <FormMessage /></FormItem>)} />
+            </div>
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
@@ -89,15 +88,17 @@ function AddStudentCard() {
                 control={form.control} name="email"
                 render={({ field }) => (
                   <FormItem><div className="required"><FormLabel>Email</FormLabel></div>
-                    <FormControl><Input placeholder="cublueprint@gmail.com" {...field} /></FormControl>
-                    <FormMessage /></FormItem>)}/></div>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage /></FormItem>)} />
+            </div>
             <div className="form-field space-y-1 w-full">
               <FormField
                 control={form.control} name="studentNumber"
                 render={({ field }) => (
                   <FormItem><div className="required"><FormLabel>Student Number</FormLabel></div>
-                    <FormControl><Input placeholder="123456789" {...field} /></FormControl>
-                    <FormMessage /></FormItem>)} /></div>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage /></FormItem>)} />
+            </div>
             <div className="form-field space-y-1 w-1/3">
               <FormField
                 control={form.control} name="yearLevel"
@@ -106,7 +107,7 @@ function AddStudentCard() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="2" />
+                          <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -117,32 +118,26 @@ function AddStudentCard() {
                         <SelectItem value="5">5</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage /></FormItem>)} /></div>
+                    <FormMessage /></FormItem>)} />
+            </div>
             <div className="form-field space-y-1 w-full">
               <FormField
                 control={form.control} name="major"
                 render={({ field }) => (
                   <FormItem><div className="required"><FormLabel>Major</FormLabel></div>
                     <FormControl><Input {...field} /></FormControl>
-                    <FormMessage /></FormItem>)} /></div>
+                    <FormMessage /></FormItem>)} />
+            </div>
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <FormField
-                control={form.control} name="courses"
-                render={({ field }) => (
-                  <FormItem><div className="required"><FormLabel>Courses Needing Improvement</FormLabel></div>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage /></FormItem>)} /></div>
+              <CourseInput form={form} courses={courses} setCourses={setCourses} />
+            </div>
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <FormField
-                control={form.control} name="courses"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl><p>TABLE</p></FormControl>
-                    <FormMessage /></FormItem>)} /></div>
+              <AvailabilityTable form={form} availability={availability} setAvailability={setAvailability} />
+            </div>
           </div>
           <Button className="confirm" type="submit">Confirm</Button>
         </form>
