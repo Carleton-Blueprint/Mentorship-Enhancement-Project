@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -29,7 +29,12 @@ import AvailabilityTable from './AvailabilityTable';
 function AddStudentCard() {
   const [courses, setCourses] = useState<string[]>([]);
   const [availability, setAvailability] = useState<boolean[][]>([[]]);
-  // INDECIDED FORMAT FOR AVAILABILITY
+
+  useEffect(() => {
+    const rows = 5;
+    const columns = 12;
+    setAvailability(Array.from({ length: rows }, () => Array(columns).fill(false)));
+  }, [])
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),

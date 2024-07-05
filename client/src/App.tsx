@@ -25,9 +25,13 @@ function App() {
     setMenuExpanded(!menuExpanded);
   }
 
-  function manageEntityClicked(): void {
-    setManageStudents(!manageStudents);
-    // TO DO, determines if students or mentors are being managed
+  function manageEntityClicked(entity: string): void {
+    if (entity === "student" && !manageStudents) {
+      setManageStudents(!manageStudents);
+    } else if (entity === "mentor" && manageStudents) {
+      setManageStudents(!manageStudents);
+      setMenuExpanded(false);
+    }
   }
 
   return (
@@ -40,8 +44,18 @@ function App() {
 
       <Tabs defaultValue="student">
         <TabsList className="tabs-list-overlap w-[400px] grid grid-cols-2 p-0 rounded-full text-dark-grey bg-grey">
-          <TabsTrigger className="slider-menu-options text-base rounded-full data-[state=active]:bg-red data-[state=active]:text-white" value="student">Manage Students</TabsTrigger>
-          <TabsTrigger className="slider-menu-options text-base rounded-full data-[state=active]:bg-red data-[state=active]:text-white" value="mentor">Manage Mentors</TabsTrigger>
+          <div className={`absolute h-full transition-all duration-300 ease-in-out 
+            ${manageStudents ? '' : 'translate-x-full'} w-1/2 bg-red rounded-full
+            select-none`}>  
+          </div>
+          <TabsTrigger onClick={() => manageEntityClicked("student")} className=
+            "h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+            value="student">Manage Students
+          </TabsTrigger>
+          <TabsTrigger onClick={() => manageEntityClicked("mentor")} className=
+            "h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+            value="mentor">Manage Mentors
+          </TabsTrigger>
         </TabsList>
         <div className="mx-12 py-3">
           <TabsContent className="flex flex-row" value="student">
@@ -49,7 +63,7 @@ function App() {
               <p className="font-semibold text-nowrap">
                 Add New <br/> Student
               </p>
-              <svg className="plus-icon size-6 text-[#949494] ml-2 mb-1" onClick={plusIconClicked} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="plus-icon select-none size-6 text-[#949494] ml-2 mb-1" onClick={plusIconClicked} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
               </svg>
             </div>

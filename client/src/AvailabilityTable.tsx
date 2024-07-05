@@ -15,16 +15,8 @@ const AvailabilityTable: React.FC<AvailabilityTableProps> = ({ form, availabilit
     '11:30 -\n12:00 PM', '12:00 -\n12:30 PM', '12:30 -\n1:00 PM',
     '1:00 -\n1:30 PM', '1:30 -\n2:00 PM', '2:00 -\n2:30 PM',
     '2:30 -\n3:00 PM', '3:00 -\n3:30 PM', '3:30 -\n4:00 PM'];
-
-  // useEffect(() => {
-  //   for (let i = 0; i < daysOfWeek.length; i++) {
-  //     for (let j = 0; j < timeslots.length; j++) {
-  //       availability[i][j] = false;
-  //     }
-  //   }
-  // }, []);
   
-  function selectTimeslot(event: React.MouseEvent<HTMLLabelElement, MouseEvent>): void {
+  function selectTimeslot(event: React.MouseEvent<HTMLLabelElement, MouseEvent>, rowNum: number, colNum: number): void {
     const target = event.currentTarget;
     if (target.classList.contains('selected')) {
       target.classList.remove('selected');
@@ -32,25 +24,29 @@ const AvailabilityTable: React.FC<AvailabilityTableProps> = ({ form, availabilit
     else {
       target.classList.add('selected');
     }
-    // console.log(timeslot);
-    // setAvailability(!availability);
+    const newAvailability = [...availability];
+    newAvailability[rowNum][colNum] = !newAvailability[rowNum][colNum];
+    setAvailability(newAvailability);
+    console.log(availability);
   }
 
   return (
     <>
-      <div className="text-sm font-medium">Availability</div>
+      <div className="text-sm font-medium required">Availability</div>
       <table className="w-full table-fixed timeslot-table">
         <tbody>
-          {daysOfWeek.map((day, index) => (
-            <tr key={index}>
-              <td className="titles">{day}</td>
-              {timeslots.map((timeslot, innerIndex) => (
-                <td key={innerIndex}>
+          {daysOfWeek.map((day, rowNum) => (
+            <tr key={rowNum}>
+              <td className="select-none text-center font-medium bg-[#D9D9D9]">{day}</td>
+              {timeslots.map((timeslot, colNum) => (
+                <td key={colNum}>
                   <label
-                    className="timeslot-label prevent-select"
-                    onClick={selectTimeslot}
+                    className="timeslot-label select-none"
+                    onClick={(event) => selectTimeslot(event, rowNum, colNum)}
                   >
                     {timeslot}
+                    {/* /{rowNum}/
+                    {colNum} */}
                   </label>
                 </td>
               ))}

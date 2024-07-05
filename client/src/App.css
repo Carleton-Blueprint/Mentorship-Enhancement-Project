@@ -62,13 +62,6 @@ button.confirm {
   width: 120px;
 }
 
-td.titles {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  font-weight: 500;
-}
-
 label.timeslot-label {
   @apply px-2.5 py-2 bg-white text-gray-700 hover:bg-gray-100;
   display: flex;
@@ -89,23 +82,23 @@ table.timeslot-table {
   margin-top: 8px !important;
 }
 
+tr:first-of-type td:first-of-type { /* top left */
+  border-top-left-radius: 5px;
+}
+tr:first-of-type td:last-of-type label { /* top right */
+  border-top-right-radius: 5px;
+}
+tr:last-of-type td:first-of-type { /* bottom left */
+  border-bottom-left-radius: 5px;
+}
+tr:last-of-type td:last-of-type label { /* bottom right */
+  border-bottom-right-radius: 5px;
+}
+
 /* TabsList */
 .tabs-list-overlap {
   margin-top: -20px;
   margin-left: 40px;
   position: relative;
   z-index: 1;
-}
-
-/* TabsTrigger */
-.slider-menu-options {
-  height: 100%;
-  /* transition: transform 1.15s ease-in-out; */
-}
-
-/* Prevents text from being selected */
-.prevent-select {
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none; /* IE 10 and IE 11 */
-  user-select: none; /* Standard syntax */
 }
