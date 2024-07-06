@@ -2,17 +2,18 @@ import React, { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { Input } from './components/ui/input';
 import { Badge } from './components/ui/badge';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from './components/ui/form';
-import { FormSchema } from "./schemas/studentForm";
+import { FormSchema } from "./schemas/entityForm";
 import { UseFormReturn } from 'react-hook-form';
 import { z } from "zod";
 
+import { v4 as uuidv4 } from 'uuid';
+
 type CourseInputProps = {
   form: UseFormReturn<z.infer<typeof FormSchema>>;
-  courses: string[];
-  setCourses: (courses: string[]) => void;
 };
 
-const CourseInput: React.FC<CourseInputProps> = ({ form, courses, setCourses }) => {
+const CourseInput: React.FC<CourseInputProps> = ({ form }) => {
+  const [courses, setCourses] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -63,20 +64,24 @@ const CourseInput: React.FC<CourseInputProps> = ({ form, courses, setCourses }) 
           />
           <FormMessage />
           <div className="flex flex-wrap gap-2 mb-2">
-            {courses.map((course, index) => (
-              <Badge
-                key={index}
-                className="px-3 py-1 text-sm font-medium text-light-grey-2 bg-dark-grey rounded-full hover:bg-dark-grey"
-              >
-                {course}
-                <button
-                  type="button"
-                  className="ml-2 rounded-full"
-                  onClick={() => removeCourse(course)}
-                >
-                  &times;
-                </button>
-              </Badge>
+            {courses.map((course) => (
+              <div key={uuidv4()}>
+                <FormControl>
+                  <Badge
+                    // {...field}
+                    className="px-3 py-1 text-sm font-medium text-light-grey-2 bg-dark-grey rounded-full hover:bg-dark-grey"
+                  >
+                    {course}
+                    <button
+                      type="button"
+                      className="ml-2 rounded-full"
+                      onClick={() => removeCourse(course)}
+                    >
+                      &times;
+                    </button>
+                  </Badge>
+                </FormControl>
+              </div>
             ))}
           </div>
         </FormItem>

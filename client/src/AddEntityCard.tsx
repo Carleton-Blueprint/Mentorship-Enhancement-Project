@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import './App.css';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -18,45 +18,59 @@ import {
   FormLabel,
   FormMessage,
 } from "./components/ui/form";
+import { toast } from "./components/ui/use-toast"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { FormSchema } from "./schemas/studentForm";
+import { FormSchema } from "./schemas/entityForm";
 import CourseInput from './CourseInput';
 import AvailabilityTable from './AvailabilityTable';
 
-function AddStudentCard() {
-  const [courses, setCourses] = useState<string[]>([]);
-  const [availability, setAvailability] = useState<boolean[][]>([[]]);
-
-  useEffect(() => {
-    const rows = 5;
-    const columns = 12;
-    setAvailability(Array.from({ length: rows }, () => Array(columns).fill(false)));
-  }, [])
-
+function AddEntityCard({ entity }: { entity: string }) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      preferredName: "",
+      preferredPronouns: "",
+      email: "",
+      entityNumber: "",
+      yearLevel: "",
+      major: "",
+      courses: [],
+      // courses: "",
+      availability: [],
+    },
   });
 
-  function onSubmit(values: z.infer<typeof FormSchema>) {
-    values.courses = courses // bypass zod validation for now
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    // data.courses = courses // bypass zod validation for now
     // Do something with the form values.
-    console.log(values)
+    console.log(data)
+    toast({
+      // TODO: FIX THEME, MAKE THIS VISIBLE
+      title: "You submitted the following values:",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+        </pre>
+      ),
+    })
   }
 
   return (
     <Form {...form}>
       <div className="w-full">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="AddStudentCard mt-1 flex flex-col w-full">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="AddEntityCard mt-1 flex flex-col w-full">
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
               <FormField
                 control={form.control} name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="required"><FormLabel>Student Name</FormLabel></div>
+                    <div className="required"><FormLabel>{entity} Name</FormLabel></div>
                     <FormControl><Input {...field} /></FormControl>
                     <div className="form-details"><FormDescription>First</FormDescription></div>
                     <FormMessage /></FormItem>)} />
@@ -98,9 +112,9 @@ function AddStudentCard() {
             </div>
             <div className="form-field space-y-1 w-full">
               <FormField
-                control={form.control} name="studentNumber"
+                control={form.control} name="entityNumber"
                 render={({ field }) => (
-                  <FormItem><div className="required"><FormLabel>Student Number</FormLabel></div>
+                  <FormItem><div className="required"><FormLabel>{entity} Number</FormLabel></div>
                     <FormControl><Input {...field} /></FormControl>
                     <FormMessage /></FormItem>)} />
             </div>
@@ -136,12 +150,12 @@ function AddStudentCard() {
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <CourseInput form={form} courses={courses} setCourses={setCourses} />
+              <CourseInput form={form} />
             </div>
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <AvailabilityTable form={form} availability={availability} setAvailability={setAvailability} />
+              <AvailabilityTable form={form} />
             </div>
           </div>
           <Button className="confirm" type="submit">Confirm</Button>
@@ -151,4 +165,4 @@ function AddStudentCard() {
   );
 }
 
-export default AddStudentCard;
+export default AddEntityCard;

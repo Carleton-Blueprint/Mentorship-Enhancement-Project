@@ -78,9 +78,9 @@ label.timeslot-label.selected {
   background-color: #006FE6BF;
 }
 
-table.timeslot-table {
+/* table.timeslot-table {
   margin-top: 8px !important;
-}
+} */
 
 tr:first-of-type td:first-of-type { /* top left */
   border-top-left-radius: 5px;
