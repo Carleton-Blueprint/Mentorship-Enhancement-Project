@@ -1,43 +1,80 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://rosali:postgres@localhost:5432/ewi?schema=public"
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model Class {
-  course_id Int @id @default(autoincrement())
-  course_code String @unique
-  course_name String 
+model Course {
+  id            Int             @id @default(autoincrement())
+  course_code   String          @unique
+  course_name   String
+  MentorCourse  MentorCourse[]
+  StudentCourse StudentCourse[]
 }
 
-model Mentor { 
-  mentor_id Int @id @default(autoincrement())
-  name String 
-  email_address String
-  year Int
-  Program String
+model Mentor {
+  id                 Int                  @id @default(autoincrement())
+  mentor_id          BigInt               @unique
+  name               String
+  email_address      String
+  year               String
+  Program            String
+  MentorAvailability MentorAvailability[]
+  MentorCourse       MentorCourse[]
 }
 
-model MentorAvailability {
-  id Int @id @default(autoincrement())
-  mentor_id Int @unique
-  end_time DateTime
-  start_time DateTime
+model Availability {
+  id                  Int                   @id @default(autoincrement())
+  start_tme           DateTime
+  end_time            DateTime
+  MentorAvailability  MentorAvailability[]
+  StudentAvailability StudentAvailability[]
 }
 
 model Student {
-  student_id      Int      @id @default(autoincrement())
-  student_number  Int      @unique
-  first_name      String
-  last_name       String
+  id                  Int                   @id @default(autoincrement())
+  student_id          Int                   @unique
+  first_name          String
+  last_name           String
+  StudentAvailability StudentAvailability[]
+  StudentCourse       StudentCourse[]
+}
+
+model MentorAvailability {
+  availability    Availability @relation(fields: [availability_id], references: [id])
+  availability_id Int
+  mentor          Mentor       @relation(fields: [mentor_id], references: [id])
+  mentor_id       Int
+
+  @@unique([availability_id, mentor_id])
 }
 
 model StudentAvailability {
-  id          Int       @id @default(autoincrement())
-  student_id  Int       @unique
-  start_time  DateTime
-  end_time    DateTime
+  availability    Availability @relation(fields: [availability_id], references: [id])
+  availability_id Int
+  student         Student      @relation(fields: [student_id], references: [id])
+  student_id      Int
+
+  @@unique([availability_id, student_id])
+}
+
+model MentorCourse {
+  mentor    Mentor @relation(fields: [mentor_id], references: [id])
+  mentor_id Int
+  course    Course @relation(fields: [course_id], references: [id])
+  course_id Int
+
+  @@unique([mentor_id, course_id])
+}
+
+model StudentCourse {
+  student    Student @relation(fields: [student_id], references: [id])
+  student_id Int
+  course     Course  @relation(fields: [course_id], references: [id])
+  course_id  Int
+
+  @@unique([student_id, course_id])
 }
