@@ -5,4 +5,4 @@ import {
   insertManyStudents
 } from "../controllers/default_controller.js";
 
-defaultRouter.get('/insertStudents', insertManyStudents);
+defaultRouter.post('/insertStudents', insertManyStudents);

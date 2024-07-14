@@ -57,7 +57,7 @@ export const CsvButton = () => {
 
   const sendStudentData = async (array: CsvObject[]) => {
     try {
-      const response = await axios.post(`${serverUrl}/insertStudents`, {data: array});
+      const response = await axios.post(`${serverUrl}/students/insertStudents`, {data: array});
       console.log("successful in sending data");
     } catch (error) {
       console.log(error);

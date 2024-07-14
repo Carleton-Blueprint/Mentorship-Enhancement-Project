@@ -36,7 +36,7 @@ model Availability {
 
 model Student {
   id                  Int                   @id @default(autoincrement())
-  student_id          Int                   @unique
+  student_id          BigInt                   @unique
   first_name          String
   last_name           String
   StudentAvailability StudentAvailability[]

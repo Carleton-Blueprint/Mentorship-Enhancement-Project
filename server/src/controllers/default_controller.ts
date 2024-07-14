@@ -4,6 +4,11 @@ const prisma = new PrismaClient();
 
 export const insertManyStudents = async (request: any, response: any) => {
   const students = request.body.data;
+
+  const validationErrors = validateStudents(students);
+  if (validationErrors.length > 0) {
+    return response.status(400).json({ error: 'Validation error', details: validationErrors });
+  }
   try {
     const createdStudents: any = await prisma.student.createMany({data: students})
     response.status(201).json({message: 'Students have been created', createdStudents});
@@ -27,7 +32,9 @@ function validateStudents(students: Prisma.StudentCreateInput[]): string[] {
     if(typeof(student.student_id) !== "number") {
       errors.push('Student id must be a number')
     }
-    // Add more validation rules as needed
+    if (!student.StudentAvailability) {
+      errors.push('Must indicate student availibility')
+    }
   });
 
   return errors;

@@ -10,11 +10,11 @@ app.use(
   express.json(),
 //   cookieParser(),
   cors({
-    origin: [process.env.CLIENT_URL || "localhost://3000"],
+    origin: [process.env.CLIENT_URL || "http://localhost:3000"],
     credentials: true,
   })
 );
-app.use("/", defaultRouter);
+app.use("/students", defaultRouter);
 
 app.listen(port, () => {
   console.log(`App is listening to port: ${port}`);
