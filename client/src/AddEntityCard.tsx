@@ -27,6 +27,9 @@ import { FormSchema } from "./schemas/entityForm";
 import CourseInput from './CourseInput';
 import AvailabilityTable from './AvailabilityTable';
 
+import axios from 'axios';
+const serverUrl = process.env.REACT_APP_SERVER_URL;
+
 function AddEntityCard({ entity }: { entity: string }) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -49,6 +52,7 @@ function AddEntityCard({ entity }: { entity: string }) {
     // data.courses = courses // bypass zod validation for now
     // Do something with the form values.
     console.log(data)
+    sendStudentData(data)
     toast({
       // TODO: FIX THEME, MAKE THIS VISIBLE
       title: "You submitted the following values:",
@@ -58,6 +62,16 @@ function AddEntityCard({ entity }: { entity: string }) {
         </pre>
       ),
     })
+  }
+
+  const sendStudentData = async (student: z.infer<typeof FormSchema>) => {
+    try {
+      console.log("sending over")
+      const response = await axios.post(`${serverUrl}/students/insertStudent`, {data: student});
+      console.log("successful in sending data");
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (

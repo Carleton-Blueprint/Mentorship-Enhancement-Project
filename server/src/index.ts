@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import {defaultRouter} from './routes/defaultRoutes.js';
 const app = express();
-const port = process.env.PORT || 5000;
 dotenv.config();
+const port = process.env.PORT || 5000;
 // Middleware for parsing request body
 app.use(
   express.json(),
