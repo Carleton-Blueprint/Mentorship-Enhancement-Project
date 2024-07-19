@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://rosali:postgres@localhost:5432/ewi?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -39,6 +39,10 @@ model Student {
   student_id          BigInt                   @unique
   first_name          String
   last_name           String
+  major               String
+  preferred_name      String
+  preferred_pronouns  String
+  year_level          String
   StudentAvailability StudentAvailability[]
   StudentCourse       StudentCourse[]
 }
