@@ -9,6 +9,7 @@ import {
   TabsTrigger,
 } from "./components/ui/tabs"
 import { Button } from './components/ui/button';
+import {CsvButton} from './importCsvButton';
 
 function App() {
   const [manageEntities, setManageEntities] = useState<Boolean>(true);
@@ -78,10 +79,11 @@ function App() {
                 <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
               </svg>
             </div>
-
-            {menuExpanded ? '' : <Button className="bulk-add">Bulk Add (CSV)</Button>}
+            
+            {/* {menuExpanded ? '' : <Button className="bulk-add">Bulk Add (CSV)</Button>} */}
+            {menuExpanded ? '' : <CsvButton />}
             {menuExpanded ? <AddEntityCard
-              entity="Mentor"
+              entity="Student"
               courses={courses} setCourses={setCourses}
               availability={availability} setAvailability={setAvailability}
               coursesValid={coursesValid} setCoursesValid={setCoursesValid}
