@@ -3,7 +3,9 @@ import { PrismaClient, Prisma } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const insertManyStudents = async (request: any, response: any) => {
+  console.log("entering default controller")
   const students = request.body.data;
+  console.log("students", students)
 
   const validationErrors = validateStudents(students);
   if (validationErrors.length > 0) {
