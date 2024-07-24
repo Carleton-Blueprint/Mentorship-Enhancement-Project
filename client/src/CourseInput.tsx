@@ -19,7 +19,7 @@ const CourseInput: React.FC<CourseInputProps> = ({ form, courses, setCourses, co
   const [inputValue, setInputValue] = useState<string>('');
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    setInputValue(e.target.value.trim());
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -29,7 +29,7 @@ const CourseInput: React.FC<CourseInputProps> = ({ form, courses, setCourses, co
   };
 
   const handleBlur = () => {
-    if (inputValue !== '') {
+    if (inputValue.trim() !== '') {
       addCourse(inputValue);
     } else {
       setInputValue('');
