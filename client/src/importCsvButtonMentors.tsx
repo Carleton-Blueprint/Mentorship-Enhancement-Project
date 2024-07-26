@@ -12,10 +12,9 @@ interface ParsedData {
 interface CsvObject {
   [key: string]: string;
 }
-export const CsvButtonStudents = () => {
+export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<ParsedData[]>([]);
-  const [array, setArray] = useState<any[]>([]);
   const [fileName, setFileName] = useState<String>("");
 
   const fileReader = new FileReader();
@@ -47,14 +46,14 @@ export const CsvButtonStudents = () => {
     e.preventDefault();
     csvParse(e);
     if (data) {
-      sendStudentData(data);
+      sendMentorData(data);
     }
   };
 
-  const sendStudentData = async (csv: ParsedData[]) => {
+  const sendMentorData = async (csv: ParsedData[]) => {
     try {
       const response = await axios.post(
-        `${serverUrl}/students/insertStudents`,
+        `${serverUrl}/mentors/insertMentors`,
         { data: csv }
       );
       console.log("successful in sending data");
@@ -74,13 +73,15 @@ export const CsvButtonStudents = () => {
           accept={".csv"}
           onChange={handleOnChange}
         />
+        <label htmlFor="csvFileInput" className="custom-file-label">
+          Choose file
+        </label>
         {fileName && <span style={{ marginLeft: "10px" }}>{fileName}</span>}
         <Button
           className="bulk-add"
           onClick={(e) => {
             handleOnSubmit(e);
           }}
-          disabled={!fileName}
         >
           Bulk Add (CSV)
         </Button>

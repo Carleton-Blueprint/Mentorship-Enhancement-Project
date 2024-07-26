@@ -10,6 +10,7 @@ import {
 } from "./components/ui/tabs"
 import { Button } from './components/ui/button';
 import {CsvButtonStudents} from './importCsvButtonStudents';
+import {CsvButtonMentors} from './importCsvButtonMentors';
 
 function App() {
   const [manageEntities, setManageEntities] = useState<Boolean>(true);
@@ -102,7 +103,7 @@ function App() {
               </svg>
             </div>
 
-            {menuExpanded ? '' : <Button className="bulk-add">Bulk Add (CSV)</Button>}
+            {menuExpanded ? '' : <CsvButtonMentors/>}
             {menuExpanded ? <AddEntityCard
               entity="Mentor"
               courses={courses} setCourses={setCourses}

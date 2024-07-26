@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import {studentRouter} from './routes/studentRoutes.js';
+import {mentorRouter} from './routes/mentorRoutes.js';
 const app = express();
 const port = process.env.PORT || 5000;
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(
   })
 );
 app.use("/students", studentRouter);
+app.use("/mentors", mentorRouter);
 
 app.listen(port, () => {
   console.log(`App is listening to port: ${port}`);
