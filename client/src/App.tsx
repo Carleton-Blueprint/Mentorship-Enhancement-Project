@@ -9,11 +9,16 @@ import {
   TabsTrigger,
 } from "./components/ui/tabs"
 import { Button } from './components/ui/button';
-import {CsvButton} from './importCsvButton';
+import {CsvButtonStudents} from './importCsvButtonStudents';
 
 function App() {
   const [manageEntities, setManageEntities] = useState<Boolean>(true);
   const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
+  
+  const [courses, setCourses] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<boolean[][]>([[]]);
+  const [coursesValid, setCoursesValid] = useState<Boolean>(true);
+  const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
 
   function plusIconClicked(event: React.MouseEvent<SVGSVGElement, MouseEvent>): void {
     const target = event.currentTarget;
@@ -74,10 +79,16 @@ function App() {
                 <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
               </svg>
             </div>
-
+            
             {/* {menuExpanded ? '' : <Button className="bulk-add">Bulk Add (CSV)</Button>} */}
-            {menuExpanded ? '' : <CsvButton />}
-            {menuExpanded ? <AddEntityCard entity="Student" /> : ''}
+            {menuExpanded ? '' : <CsvButtonStudents />}
+            {menuExpanded ? <AddEntityCard
+              entity="Student"
+              courses={courses} setCourses={setCourses}
+              availability={availability} setAvailability={setAvailability}
+              coursesValid={coursesValid} setCoursesValid={setCoursesValid}
+              availabilityValid={availabilityValid} setAvailabilityValid={setAvailabilityValid}
+            /> : ''}
           </TabsContent>
           <TabsContent className="flex flex-row" value="mentor">
             <div className="flex max-h-12 mr-8">
@@ -92,7 +103,13 @@ function App() {
             </div>
 
             {menuExpanded ? '' : <Button className="bulk-add">Bulk Add (CSV)</Button>}
-            {menuExpanded ? <AddEntityCard entity="Mentor" /> : ''}
+            {menuExpanded ? <AddEntityCard
+              entity="Mentor"
+              courses={courses} setCourses={setCourses}
+              availability={availability} setAvailability={setAvailability}
+              coursesValid={coursesValid} setCoursesValid={setCoursesValid}
+              availabilityValid={availabilityValid} setAvailabilityValid={setAvailabilityValid}
+            /> : ''}
           </TabsContent>
         </div>
       </Tabs>

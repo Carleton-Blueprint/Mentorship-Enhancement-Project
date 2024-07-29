@@ -9,7 +9,6 @@ export const FormSchema = z.object({
   entityNumber: z.string().min(9).max(9),
   yearLevel: z.string().min(1),
   major: z.string().min(1),
-  courses: z.array(z.string()).optional(),
-  // courses: z.string().min(1).optional(),
-  availability: z.array(z.string()).optional(),
+  courses: z.array(z.string()),
+  availability: z.array(z.array(z.boolean())),
 })

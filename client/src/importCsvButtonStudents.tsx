@@ -1,12 +1,22 @@
 import React, { useState } from "react";
 import "./App.css";
 import { Button } from "./components/ui/button";
-import axios from 'axios';
+import axios from "axios";
+import Papa from "papaparse";
 const serverUrl = process.env.REACT_APP_SERVER_URL;
-export const CsvButton = () => {
+
+interface ParsedData {
+  [key: string]: string;
+}
+
+interface CsvObject {
+  [key: string]: string;
+}
+export const CsvButtonStudents = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [data, setData] = useState<ParsedData[]>([]);
   const [array, setArray] = useState<any[]>([]);
-  const [fileName, setFileName] = useState<String>('');
+  const [fileName, setFileName] = useState<String>("");
 
   const fileReader = new FileReader();
 
@@ -15,59 +25,47 @@ export const CsvButton = () => {
     setFileName(event.target.files[0].name);
   };
 
-  interface CsvObject {
-    [key: string]: string;
-  }
+  const csvParse = (e: any) => {
+    e.preventDefault();
 
-  const csvFileToArray = (string: string) => {
-    const csvHeader = string.slice(0, string.indexOf("\n")).split(",");
-    const csvRows = string.slice(string.indexOf("\n") + 1).split("\n");
-
-    const array = csvRows.map((i: string): CsvObject => {
-      const values = i.split(",");
-      const obj: CsvObject = csvHeader.reduce((object, header, index) => {
-        object[header.trim()] = values[index] ? values[index].trim() : "";
-        return object;
-      }, {} as CsvObject);
-      return obj;
-    });
-
-    setArray(array);
-    return array;
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+          console.log("results", results);
+          console.log("results.data", results.data);
+          setData(results.data as ParsedData[]);
+        },
+        error: (error) => {
+          console.error("Errors parsing CSV:", error);
+        },
+      });
+    }
   };
 
   const handleOnSubmit = (e: any) => {
     e.preventDefault();
-
-    if (file) {
-      fileReader.onload = function (event) {
-        const text = event.target?.result;
-        let array = {}
-        if (typeof text === "string") {
-          array = csvFileToArray(text);
-        } else {
-          console.error("File reading error: result is not a string.");
-        }
-      };
-
-      fileReader.readAsText(file);
-      sendStudentData(array);
+    csvParse(e);
+    if (data) {
+      sendStudentData(data);
     }
   };
 
-  const sendStudentData = async (array: CsvObject[]) => {
+  const sendStudentData = async (csv: ParsedData[]) => {
     try {
-      const response = await axios.post(`${serverUrl}/students/insertStudents`, {data: array});
+      const response = await axios.post(
+        `${serverUrl}/students/insertStudents`,
+        { data: csv }
+      );
       console.log("successful in sending data");
     } catch (error) {
+      console.log("in sendStudentData")
       console.log(error);
     }
-  }
-
-  const headerKeys = Object.keys(Object.assign({}, ...array));
+  };
 
   return (
-    <div style={{ textAlign: "center"}}>
+    <div style={{ textAlign: "center" }}>
       <form>
         <input
           className={"custom-file-input"}
@@ -79,7 +77,7 @@ export const CsvButton = () => {
         <label htmlFor="csvFileInput" className="custom-file-label">
           Choose file
         </label>
-        {fileName && <span style={{ marginLeft: '10px' }}>{fileName}</span>}
+        {fileName && <span style={{ marginLeft: "10px" }}>{fileName}</span>}
         <Button
           className="bulk-add"
           onClick={(e) => {
@@ -92,7 +90,7 @@ export const CsvButton = () => {
 
       <br />
 
-      <table>
+      {/* <table>
         <thead>
           <tr key={"header"}>
             {headerKeys.map((key) => (
@@ -110,7 +108,7 @@ export const CsvButton = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table> */}
     </div>
   );
 };

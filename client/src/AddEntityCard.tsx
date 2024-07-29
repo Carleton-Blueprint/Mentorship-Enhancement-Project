@@ -30,7 +30,22 @@ import AvailabilityTable from './AvailabilityTable';
 import axios from 'axios';
 const serverUrl = process.env.REACT_APP_SERVER_URL;
 
-function AddEntityCard({ entity }: { entity: string }) {
+type AddEntityCardProps = {
+  entity: string;
+  courses: string[];
+  setCourses: React.Dispatch<React.SetStateAction<string[]>>;
+  availability: boolean[][];
+  setAvailability: React.Dispatch<React.SetStateAction<boolean[][]>>;
+  coursesValid: Boolean;
+  setCoursesValid: React.Dispatch<React.SetStateAction<Boolean>>;
+  availabilityValid: Boolean;
+  setAvailabilityValid: React.Dispatch<React.SetStateAction<Boolean>>;
+};
+
+const AddEntityCard: React.FC<AddEntityCardProps> = ({
+  entity, courses, setCourses, availability, setAvailability,
+  coursesValid, setCoursesValid, availabilityValid, setAvailabilityValid
+}) => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -49,7 +64,29 @@ function AddEntityCard({ entity }: { entity: string }) {
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    // data.courses = courses // bypass zod validation for now
+    // confirm all courses are of valid format
+    let coursesValid = false;
+    if (courses.length > 0) {
+      coursesValid = courses.every((course: string) => {
+        return /^[A-Z]{4}\d{4}$/.test(course);
+      });
+    }
+    if (!coursesValid) { setCoursesValid(false); return; }
+    else { setCoursesValid(true); }
+
+    // confirm at least 1 value is true
+    let availabilityValid = false;
+    if (availability.length > 0) {
+      availabilityValid = availability.some((day: boolean[]) => {
+        return day.includes(true);
+      });
+    }
+    if (!availabilityValid) { setAvailabilityValid(false); return; }
+    else { setAvailabilityValid(true); }
+
+    data.courses = courses // bypass zod validation
+    data.availability = availability // bypass zod validation
+
     // Do something with the form values.
     console.log(data)
     sendStudentData(data)
@@ -164,12 +201,18 @@ function AddEntityCard({ entity }: { entity: string }) {
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <CourseInput form={form} />
+              <CourseInput form={form}
+                courses={courses} setCourses={setCourses}
+                coursesValid={coursesValid} setCoursesValid={setCoursesValid}
+              />
             </div>
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <AvailabilityTable form={form} />
+              <AvailabilityTable form={form}
+                availability={availability} setAvailability={setAvailability}
+                availabilityValid={availabilityValid} setAvailabilityValid={setAvailabilityValid}
+              />
             </div>
           </div>
           <Button className="confirm" type="submit">Confirm</Button>
