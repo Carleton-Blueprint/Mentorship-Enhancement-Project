@@ -3,7 +3,8 @@ import "./App.css";
 import { Button } from "./components/ui/button";
 import axios from "axios";
 import Papa from "papaparse";
-const serverUrl = process.env.REACT_APP_SERVER_URL;
+const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
+
 
 interface ParsedData {
   [key: string]: string;
@@ -47,6 +48,7 @@ export const CsvButtonMentors = () => {
     csvParse(e);
     if (data) {
       sendMentorData(data);
+      console.log("Data", data)
     }
   };
 
@@ -58,7 +60,7 @@ export const CsvButtonMentors = () => {
       );
       console.log("successful in sending data");
     } catch (error) {
-      console.log("in sendStudentData")
+      console.log("in sendMentorData")
       console.log(error);
     }
   };

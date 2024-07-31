@@ -10,8 +10,8 @@ export const insertManyMentors = async (request: any, response: any) => {
       return response.status(400).json({ error: 'Validation error', details: validationErrors });
     }
     try {
-      const createdMentors: any = await prisma.student.createMany({data: mentors})
-      response.status(201).json({message: 'Mentors have been created', createdMentors});
+      const createdMentors: any = await prisma.mentor.createMany({data: mentors})
+      response.status(201).json({message: 'Mentors have been created', createdMentors, mentors});
     } catch (error: any) {
       response.status(500).json({error: error.message});
     }
@@ -24,10 +24,10 @@ export const insertManyMentors = async (request: any, response: any) => {
     // Example of validation logic (you can customize this based on your requirements)
     mentors.forEach((mentor, index) => {
       if (!mentor.first_name) {
-        errors.push(`Mentor at index ${index} does not have a name.`);
+        errors.push(`Mentor at index ${index} does not have a first name.`);
       }
       if (!mentor.last_name) {
-        errors.push(`Mentor at index ${index} does not have a name.`);
+        errors.push(`Mentor at index ${index} does not have a last name.`);
       }
       if (!mentor.mentor_id) {
         errors.push("Mentor id is necessary");
@@ -38,7 +38,7 @@ export const insertManyMentors = async (request: any, response: any) => {
       if (!mentor.MentorAvailability) {
         errors.push('Must indicate mentor availibility')
       }
-      if (!mentor.Program) {
+      if (!mentor.program) {
         errors.push('Must enter current program of education')
       }
     });

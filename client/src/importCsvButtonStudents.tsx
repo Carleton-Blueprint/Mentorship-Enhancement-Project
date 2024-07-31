@@ -3,7 +3,8 @@ import "./App.css";
 import { Button } from "./components/ui/button";
 import axios from "axios";
 import Papa from "papaparse";
-const serverUrl = process.env.REACT_APP_SERVER_URL;
+const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
+;
 
 interface ParsedData {
   [key: string]: string;

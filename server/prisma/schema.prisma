@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://rosali:postgres@localhost:5432/ewi?schema=public"
+  url      = "postgresql://postgres:postgres@localhost:5432/ewi-matching"
 }
 
 generator client {
@@ -22,7 +22,7 @@ model Mentor {
   last_name          String
   email_address      String
   year               String
-  Program            String
+  program            String
   MentorAvailability MentorAvailability[]
   MentorCourse       MentorCourse[]
 }
