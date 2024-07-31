@@ -192,6 +192,7 @@ export const CsvButtonMentors = () => {
     if (data) {
       console.log("data after parse", data);
       sendMentorData(data);
+      console.log("Data", data)
     }
   };
 
