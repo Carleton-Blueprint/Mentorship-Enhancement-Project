@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import yaml from 'js-yaml';
 
 const prisma = new PrismaClient();
 

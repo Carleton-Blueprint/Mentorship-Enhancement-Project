@@ -1,3 +1,8 @@
 courses:
-  code: "COMP 1804"
-  
+  comp:
+    comp_1805: "COMP1805"
+
+  math: 
+    math_1007: "MATH1007"
+    
+
