@@ -10,12 +10,34 @@ interface ParsedData {
   [key: string]: string;
 }
 
-interface CsvObject {
-  [key: string]: string;
+interface Student {
+  id: number;
+  student_id: number;
+  email: String;
+  first_name: String;
+  last_name: String;
+  courses: Array<String>;
+  availability: Availability[];
 }
+
+interface Availability {
+  day: String;
+  time_ranges: TimeRange[];
+}
+
+interface TimeRange {
+  start_time: Time;
+  end_time: Time;
+}
+
+interface Time {
+  hours: number;
+  minutes: number;
+}
+
 export const CsvButtonStudents = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [data, setData] = useState<ParsedData[]>([]);
+  const [data, setData] = useState<Student[]>([]);
   const [array, setArray] = useState<any[]>([]);
   const [fileName, setFileName] = useState<String>("");
 
@@ -33,15 +55,82 @@ export const CsvButtonStudents = () => {
       Papa.parse(file, {
         header: true,
         complete: (results) => {
-          console.log("results", results);
-          console.log("results.data", results.data);
-          setData(results.data as ParsedData[]);
+          console.log("results", results.data);
+          const toSend = mapToFields(results.data as ParsedData[]);
+          console.log("toSend", toSend);
+          setData(toSend);
         },
         error: (error) => {
           console.error("Errors parsing CSV:", error);
         },
       });
     }
+  };
+
+  function parseTime(timeStr: string): Time {
+    const [time, modifier] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+    if (modifier === "PM" && hours !== 12) {
+      hours += 12;
+    } else if (modifier === "AM" && hours === 12) {
+      hours = 0;
+    }
+    return { hours, minutes };
+  }
+
+  function parseTimeRange(timeRangeStr: string): TimeRange {
+    const [startTimeStr, endTimeStr] = timeRangeStr
+      .split(" to ")
+      .map((time) => time.trim());
+    return {
+      start_time: parseTime(startTimeStr),
+      end_time: parseTime(endTimeStr),
+    };
+  }
+
+  // Mapping function
+  const mapToFields = (students: ParsedData[]): Student[] => {
+    return students.map((s: ParsedData): Student => {
+      const daysOfWeek = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+      ];
+
+      const availability: Availability[] = daysOfWeek
+        .map((day) => {
+          const times = s[day]?.split(";").filter(Boolean) || [];
+          const parsedTimes: TimeRange[] = [];
+          times.forEach((time) => {
+            parsedTimes.push(parseTimeRange(time));
+          });
+          console.log("parsedTimes", parsedTimes);
+          return {
+            day,
+            time_ranges: parsedTimes,
+          };
+        })
+        .filter((day) => day.time_ranges.length > 0);
+      console.log("availability", availability);
+
+      const courses = s[
+        "Please list any courses in which you would like to improve your grades."
+      ]
+        .split(",")
+        .map((course: string) => course.trim());
+
+      return {
+        id: parseInt(s["ID"]),
+        student_id: parseInt(s["Student Number"]),
+        email: s["Carleton Email"],
+        first_name: s["First Name"],
+        last_name: s["Last Name"],
+        courses,
+        availability,
+      };
+    });
   };
 
   const handleOnSubmit = (e: any) => {
@@ -52,7 +141,7 @@ export const CsvButtonStudents = () => {
     }
   };
 
-  const sendStudentData = async (csv: ParsedData[]) => {
+  const sendStudentData = async (csv: Student[]) => {
     try {
       const response = await axios.post(
         `${serverUrl}/students/insertStudents`,
@@ -60,7 +149,7 @@ export const CsvButtonStudents = () => {
       );
       console.log("successful in sending data");
     } catch (error) {
-      console.log("in sendStudentData")
+      console.log("in sendStudentData");
       console.log(error);
     }
   };
@@ -88,26 +177,6 @@ export const CsvButtonStudents = () => {
       </form>
 
       <br />
-
-      {/* <table>
-        <thead>
-          <tr key={"header"}>
-            {headerKeys.map((key) => (
-              <th>{key}</th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {array.map((item) => (
-            <tr key={item.id}>
-              {Object.values(item).map((val: any) => (
-                <td>{val}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table> */}
     </div>
   );
 };

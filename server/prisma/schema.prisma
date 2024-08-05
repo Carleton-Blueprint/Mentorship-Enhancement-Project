@@ -28,10 +28,13 @@ model Mentor {
 
 model Availability {
   id                  Int                   @id @default(autoincrement())
-  start_tme           DateTime
+  day                 String
+  start_time           DateTime
   end_time            DateTime
   MentorAvailability  MentorAvailability[]
   StudentAvailability StudentAvailability[]
+
+  @@unique([day, start_time, end_time], name: "unique_avail")
 }
 
 model Student {
@@ -39,6 +42,7 @@ model Student {
   student_id          BigInt                   @unique
   first_name          String
   last_name           String
+  email               String
   StudentAvailability StudentAvailability[]
   StudentCourse       StudentCourse[]
 }
