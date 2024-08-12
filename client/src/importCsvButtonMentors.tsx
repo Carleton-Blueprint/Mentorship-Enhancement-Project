@@ -30,8 +30,6 @@ export const CsvButtonMentors = () => {
   const [data, setData] = useState<Mentor[]>([]);
   const [fileName, setFileName] = useState<String>("");
 
-  const fileReader = new FileReader();
-
   const handleOnChange = (event: any) => {
     console.log("entering");
     const text = event.target.files[0];
@@ -192,7 +190,7 @@ export const CsvButtonMentors = () => {
     if (data) {
       console.log("data after parse", data);
       sendMentorData(data);
-      console.log("Data", data)
+      console.log("Data", data);
     }
   };
 
@@ -232,26 +230,6 @@ export const CsvButtonMentors = () => {
       </form>
 
       <br />
-
-      {/* <table>
-        <thead>
-          <tr key={"header"}>
-            {headerKeys.map((key) => (
-              <th>{key}</th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {array.map((item) => (
-            <tr key={item.id}>
-              {Object.values(item).map((val: any) => (
-                <td>{val}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table> */}
     </div>
   );
 };
