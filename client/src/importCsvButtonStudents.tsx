@@ -88,26 +88,6 @@ export const CsvButtonStudents = () => {
       </form>
 
       <br />
-
-      {/* <table>
-        <thead>
-          <tr key={"header"}>
-            {headerKeys.map((key) => (
-              <th>{key}</th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {array.map((item) => (
-            <tr key={item.id}>
-              {Object.values(item).map((val: any) => (
-                <td>{val}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table> */}
     </div>
   );
 };

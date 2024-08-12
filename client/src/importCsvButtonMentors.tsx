@@ -3,8 +3,8 @@ import "./App.css";
 import { Button } from "./components/ui/button";
 import axios from "axios";
 import Papa from "papaparse";
+import { Availability, Course } from "./types";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
-
 
 interface ParsedData {
   [key: string]: string;
@@ -13,33 +13,65 @@ interface ParsedData {
 interface CsvObject {
   [key: string]: string;
 }
+
+interface parsedMentor {
+  mentor_id: number;
+  first_name: String;
+  last_name: String;
+  email_address: String;
+  year: String;
+  program: String;
+  availability: Availability[];
+  course: Course[];
+}
+
 export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<ParsedData[]>([]);
   const [fileName, setFileName] = useState<String>("");
 
-  const fileReader = new FileReader();
-
   const handleOnChange = (event: any) => {
+    console.log("entering")
+    const text = event.target.files[0];
+    const lines = text.split("\n");
+    const modifiedText = lines.slice(5).join("\n");
+    console.log("modifiedText",modifiedText)
     setFile(event.target.files[0]);
     setFileName(event.target.files[0].name);
   };
 
   const csvParse = (e: any) => {
     e.preventDefault();
+    console.log("file", file);
+    const fileReader = new FileReader();
+    fileReader.onload = (e) => {
+      const text = e.target?.result;
+      if (typeof text === "string") {
+        // Remove the first four lines
+        const lines = text.split("\n");
+        const modifiedText = lines.slice(5).join("\n");
+        console.log('modifiedText', modifiedText);
 
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        complete: (results) => {
-          console.log("results", results);
-          console.log("results.data", results.data);
-          setData(results.data as ParsedData[]);
-        },
-        error: (error) => {
-          console.error("Errors parsing CSV:", error);
-        },
-      });
+        if (modifiedText) {
+          Papa.parse(modifiedText, {
+            header: true,
+            complete: (results) => {
+              console.log("hi")
+              console.log("modifiedtext", modifiedText)
+              console.log('results.data', results.data)
+              setData(results.data as ParsedData[]);
+            },
+            error: (error: any) => {
+              console.error("Errors parsing CSV:", error);
+            },
+          });
+        }
+      }
+    };
+  };
+
+  const formatCsvData = (mentorData: any) => {
+    for (const mentor of mentorData) {
     }
   };
 
@@ -48,19 +80,18 @@ export const CsvButtonMentors = () => {
     csvParse(e);
     if (data) {
       sendMentorData(data);
-      console.log("Data", data)
+      console.log("Data", data);
     }
   };
 
   const sendMentorData = async (csv: ParsedData[]) => {
     try {
-      const response = await axios.post(
-        `${serverUrl}/mentors/insertMentors`,
-        { data: csv }
-      );
+      const response = await axios.post(`${serverUrl}/mentors/insertMentors`, {
+        data: csv,
+      });
       console.log("successful in sending data");
     } catch (error) {
-      console.log("in sendMentorData")
+      console.log("in sendMentorData");
       console.log(error);
     }
   };
@@ -90,26 +121,6 @@ export const CsvButtonMentors = () => {
       </form>
 
       <br />
-
-      {/* <table>
-        <thead>
-          <tr key={"header"}>
-            {headerKeys.map((key) => (
-              <th>{key}</th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {array.map((item) => (
-            <tr key={item.id}>
-              {Object.values(item).map((val: any) => (
-                <td>{val}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table> */}
     </div>
   );
 };
