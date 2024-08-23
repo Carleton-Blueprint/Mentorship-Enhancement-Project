@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import "./App.css";
 import { Button } from "./components/ui/button";
+import {
+  Table,
+  TableRow,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableCell,
+} from "./components/ui/table";
 import axios from "axios";
 import Papa from "papaparse";
 const serverUrl = process.env.REACT_APP_SERVER_URL;
@@ -39,6 +47,7 @@ export const CsvButtonStudents = () => {
   const [data, setData] = useState<Student[]>([]);
   const [array, setArray] = useState<any[]>([]);
   const [fileName, setFileName] = useState<String>("");
+  const [sent, setSent] = useState<Boolean>(false);
 
   const fileReader = new FileReader();
 
@@ -147,11 +156,42 @@ export const CsvButtonStudents = () => {
         { data: csv }
       );
       console.log("successful in sending data");
+      setSent(true);
     } catch (error) {
       console.log("in sendStudentData");
       console.log(error);
     }
   };
+  
+  const formatTime = (time: { hours: number, minutes: number }) => {
+    const hours = time.hours % 12 || 12; // Convert to 12-hour format
+    const minutes = time.minutes.toString().padStart(2, '0');
+    const period = time.hours < 12 ? 'AM' : 'PM';
+    return `${hours}:${minutes} ${period}`;
+  };
+  
+  const renderAvailability = (student: Student) => {
+    return (
+      <div key={student.id}>
+        <ul>
+          {student.availability.map((availability: Availability) => (
+            <li>
+              <strong>{availability.day}:</strong>
+              <ul>
+                {availability.time_ranges.map((range, index) => (
+                  <li key={index}>
+                    {formatTime(range.start_time)} - {formatTime(range.end_time)}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+  
+  
 
   return (
     <div style={{ textAlign: "center" }}>
@@ -178,6 +218,42 @@ export const CsvButtonStudents = () => {
       </form>
 
       <br />
+      <div>
+        {sent && (
+          <div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student Number</TableHead>
+                  <TableHead>First Name</TableHead>
+                  <TableHead>Last Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Courses</TableHead>
+                  <TableHead>Availability</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((student: any) => (
+                  <TableRow>
+                    <TableCell>{student.student_id}</TableCell>
+                    <TableCell>{student.first_name}</TableCell>
+                    <TableCell>{student.last_name}</TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    {/* {student.courses.map((course: any) => {
+                      <TableCell>{course}</TableCell>;
+                    })}
+                    {student.availability.map((availability: any) => {
+                      <TableCell>{availability}</TableCell>;
+                    })} */}
+                    <TableCell>{student.courses.join(', ')}</TableCell>
+                    <TableCell>{renderAvailability(student)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
