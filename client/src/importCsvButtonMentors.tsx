@@ -138,6 +138,7 @@ export const CsvButtonMentors = () => {
       Papa.parse(file, {
         header: true,
         beforeFirstChunk: (chunk) => {
+          console.log('chunk', chunk)
           const lines = chunk.split("\n");
           lines.splice(0, 4);
           return lines.join("\n");
@@ -159,11 +160,12 @@ export const CsvButtonMentors = () => {
               if (course !== undefined) delete row[course];
             });
           });
-          results.data = rows;
-          const toSend = mapToFields(results.data as ParsedData[]);
+          // results.data = rows;
+          console.log('rows', rows)
+          const toSend = mapToFields(rows as ParsedData[]);
           console.log("toSend", toSend);
           setData(toSend);
-          console.log("Data in csvParse", data);
+          sendMentorData(toSend); // Send data immediately after parsing
         },
         error: (error) => {
           console.error("Errors parsing CSV:", error);
@@ -187,14 +189,10 @@ export const CsvButtonMentors = () => {
   const handleOnSubmit = (e: any) => {
     e.preventDefault();
     csvParse(e);
-    if (data) {
-      console.log("data after parse", data);
-      sendMentorData(data);
-      console.log("Data", data);
-    }
   };
-
+  
   const sendMentorData = async (csv: Mentor[]) => {
+    console.log('csv in sendMentordata', csv);
     try {
       const response = await axios.post(`${serverUrl}/mentors/insertMentors`, {
         data: csv,
