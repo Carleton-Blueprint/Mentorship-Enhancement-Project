@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://rosali:postgres@localhost:5432/ewi?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -29,22 +29,25 @@ model Mentor {
 model Availability {
   id                  Int                   @id @default(autoincrement())
   day                 String
-  start_time           DateTime
+  start_time          DateTime
   end_time            DateTime
   MentorAvailability  MentorAvailability[]
   StudentAvailability StudentAvailability[]
-
   @@unique([day, start_time, end_time], name: "unique_avail")
 }
 
 model Student {
-  id                  Int                   @id @default(autoincrement())
-  student_id          BigInt                   @unique
-  first_name          String
-  last_name           String
-  email               String
-  StudentAvailability StudentAvailability[]
-  StudentCourse       StudentCourse[]
+  id                   Int                   @id @default(autoincrement())
+  student_id           Int                   @unique
+  first_name           String
+  last_name            String
+  major                String
+  preferred_name       String
+  preferred_pronouns   String
+  email                String
+  year_level           String
+  StudentAvailability  StudentAvailability[]
+  StudentCourse        StudentCourse[]
 }
 
 model MentorAvailability {
