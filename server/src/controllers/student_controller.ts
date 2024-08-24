@@ -25,12 +25,12 @@ export const insertManyStudents = async (request: any, response: any) => {
     console.error("Error writing to file", err);
   }
 
-  const validationErrors = validateStudents(students);
-  if (validationErrors.length > 0) {
-    return response
-      .status(400)
-      .json({ error: "Validation error", details: validationErrors });
-  }
+  // const validationErrors = validateStudents(students);
+  // if (validationErrors.length > 0) {
+  //   return response
+  //     .status(400)
+  //     .json({ error: "Validation error", details: validationErrors });
+  // }
   try {
     const createdStudents: any = callCreate(students);
     response
