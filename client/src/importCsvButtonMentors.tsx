@@ -47,7 +47,7 @@ export const CsvButtonMentors = () => {
     const courseList =[
       'BIOL 1010', 'BIOL 1103', 'BIOL 1104', 'BIOL 1105', 'BIOL 2002', 
       'BIOL 2005', 'BIOL 2104', 'BIOL 2200', 'BIOL 2201', 'BIOL 2303', 
-      'BIOL 2600', 'CHEM 1001', 'CHEM 1002', 'CHEM 1004',, 'CHEM 1006',
+      'BIOL 2600', 'CHEM 1001', 'CHEM 1002', 'CHEM 1004', 'CHEM 1006',
       'CHEM 2103', 'CHEM 2203', 'CHEM 2204', 
       'CHEM 2207', 'CHEM 2208', 'CHEM 2501', 'CHEM 2800', 'COMP 1005', 
       'COMP 1006', 'COMP 1405', 'COMP 1406', 'COMP 1504', 'COMP 1805', 
