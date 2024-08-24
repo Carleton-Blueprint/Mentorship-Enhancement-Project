@@ -30,9 +30,13 @@ model Availability {
   id                  Int                   @id @default(autoincrement())
   day                 String
   start_time          DateTime
+  day                 String
+  start_time           DateTime
   end_time            DateTime
   MentorAvailability  MentorAvailability[]
   StudentAvailability StudentAvailability[]
+  @@unique([day, start_time, end_time], name: "unique_avail")
+
   @@unique([day, start_time, end_time], name: "unique_avail")
 }
 
