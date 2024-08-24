@@ -46,7 +46,6 @@ function validateStudents(students: Prisma.StudentCreateInput[]): string[] {
 export const insertStudent = async (request: any, response: any) => {
     const studentCamelCase = request.body.data;
     const studentJSON = convertToBackEndFormat(studentCamelCase)
-    console.log(`studentJSON: ${JSON.stringify(studentJSON)}`)
 
     const validationErrors = validateStudent(studentJSON)
 
@@ -55,22 +54,31 @@ export const insertStudent = async (request: any, response: any) => {
     }
 
     try {
-        createAvailability(studentJSON["StudentAvailability"])
-
-        // TODO: deal with JSON errors with schedule and course to prisma create
-        const createUser = await prisma.student.create({ data: studentJSON })
-        response.status(201).json({ message: 'Student has been created', createUser });
+        const createdStudent: any = createStudent(studentJSON);
+        response.status(201).json({ message: "Student has been created", createdStudent})
     } catch (error: any) {
         response.status(500).json({ error: error.message });
     }
 }
 
-const createAvailability = async (availabilityArray: boolean[][]) => {
-    const avail = convertAvailabilityToPrismaData(availabilityArray)
+const createStudent = async (student: any) => {
+    const avail = convertAvailabilityToPrismaData(student["StudentAvailability"])
+    console.log(`studentJSON: ${JSON.stringify(student)}`)
+    // adds courses to database
+    for (const course of student["StudentCourse"]){
+        await prisma.course.upsert({
+            where: { course_code: course },
+            create: {
+              course_code: course,
+              course_name: course,
+            },
+            update: {},
+        });
+    }
 
     // add selected availabilities to database
     for (let time of avail) {
-        // saves date object in UTC. make sure to convert to EST when retrieving data
+        // saves date object in UTC. make sure to convert to EST when retrieving data ( -5 hours)
         await prisma.availability.upsert({
             where: {
               unique_avail: {
@@ -87,6 +95,39 @@ const createAvailability = async (availabilityArray: boolean[][]) => {
             },
           });
     }
+
+    const createdStudent = await prisma.student.upsert({
+       where: { student_id: student["student_id"]},
+       update: {},
+       create: {
+           student_id: student["student_id"],
+           first_name: student["first_name"],
+           last_name: student["last_name"],
+           major: student["major"],
+           preferred_name: student["preferred_name"],
+           preferred_pronouns: student["preferred_pronouns"],
+           email: student["email"],
+           year_level: student["year_level"],
+           StudentCourse: {
+            create: student["StudentCourse"].map((course) => ({
+                course: { connect: { course_code: course }},
+            })),
+           },
+           StudentAvailability: {
+            create: avail.map((time) => ({
+                        availability: {
+                            connect: {
+                                unique_avail: {
+                                    day: time["day"],
+                                    start_time: convertToDate(time.startTime),
+                                    end_time: convertToDate(time.endTime),
+                                }
+                            }
+                        }
+                }))
+           }
+       }
+    })
 }
 
 function convertAvailabilityToPrismaData(availabilityArray: boolean[][]) {
