@@ -103,9 +103,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
 
   const sendStudentData = async (student: z.infer<typeof FormSchema>) => {
     try {
-      console.log("sending over")
       const response = await axios.post(`${serverUrl}/students/insertStudent`, {data: student});
-      console.log("successful in sending data");
     } catch (error) {
       console.log(error);
     }
