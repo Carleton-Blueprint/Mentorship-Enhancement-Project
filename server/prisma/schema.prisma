@@ -18,8 +18,7 @@ model Course {
 model Mentor {
   id                 Int                  @id @default(autoincrement())
   mentor_id          BigInt               @unique
-  first_name         String
-  last_name          String
+  name               String
   email_address      String
   year               String
   program            String
