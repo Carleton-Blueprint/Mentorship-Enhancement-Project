@@ -5,7 +5,6 @@ let idNumber = 0;
 
 export const insertManyMentors = async (request: any, response: any) => {
     const mentors = request.body.data;
-    console.log("mentors", mentors);
   
     const validationErrors = validateMentors(mentors);
     if (validationErrors.length > 0) {

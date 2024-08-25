@@ -28,10 +28,9 @@ interface Mentor {
 export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Mentor[]>([]);
-  const [fileName, setFileName] = useState<String>("");
+  const [fileName, setFileName] = useState<String | "">("");
 
   const handleOnChange = (event: any) => {
-    console.log("entering");
     const text = event.target.files[0];
     if (typeof text === "string") {
       const lines = text.split("\n");
@@ -70,13 +69,11 @@ export const CsvButtonMentors = () => {
       Papa.parse(file, {
         header: true,
         beforeFirstChunk: (chunk) => {
-          console.log('chunk', chunk)
           const lines = chunk.split("\n");
           lines.splice(0, 4);
           return lines.join("\n");
         },
         complete: (results) => {
-          console.log("results", results);
           const rows: any[] = results.data as any[];
           rows.forEach((row) => {
             row["course"] = [];
@@ -92,10 +89,9 @@ export const CsvButtonMentors = () => {
               if (course !== undefined) delete row[course];
             });
           });
-          // results.data = rows;
-          console.log('rows', rows)
+
           const toSend = mapToFields(rows as ParsedData[]);
-          console.log("toSend", toSend);
+
           setData(toSend);
           sendMentorData(toSend); // Send data immediately after parsing
         },
@@ -137,8 +133,19 @@ export const CsvButtonMentors = () => {
     }
   };
 
+  const handleRemoveFile = () => {
+    setFileName("");
+    setFile(null);
+    (document.getElementById("csvFileInput") as HTMLInputElement).value = "";
+  };
+
   return (
-    <div style={{ textAlign: "center" }}>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "10px", 
+    }} >
       <form>
         <input
           className={"custom-file-input"}
@@ -147,18 +154,37 @@ export const CsvButtonMentors = () => {
           accept={".csv"}
           onChange={handleOnChange}
         />
-        {fileName && <span style={{ marginLeft: "10px" }}>{fileName}</span>}
-        <Button
-          className="bulk-add"
-          onClick={(e) => {
-            handleOnSubmit(e);
-          }}
-          disabled={!fileName}
-        >
-          Bulk Add (CSV)
-        </Button>
+        {fileName && (
+            <span style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px", 
+              }}>
+              {fileName}
+              <span
+              style={{
+                cursor: "pointer",
+                color: "red",
+                fontWeight: "bold",
+                fontSize: "24px",
+              }}
+                onClick={handleRemoveFile}
+              >
+                &times;
+              </span>
+        </span>
+        )}
       </form>
-
+      <div>
+          <Button
+            className="bulk-add"
+            onClick={(e) => handleOnSubmit(e)}
+            disabled={!fileName}
+          >
+            Bulk Add (CSV)
+          </Button>
+        </div>
       <br />
     </div>
   );
