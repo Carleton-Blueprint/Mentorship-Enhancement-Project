@@ -3,9 +3,10 @@ import dotenv from "dotenv";
 import cors from "cors";
 import {studentRouter} from './routes/studentRoutes.js';
 import { mentorRouter } from './routes/mentorRoutes.js';
+
 const app = express();
-const port = process.env.PORT || 5000;
 dotenv.config();
+const port = process.env.PORT || 5000;
 
 console.log("entering server")
 // Middleware for parsing request body
