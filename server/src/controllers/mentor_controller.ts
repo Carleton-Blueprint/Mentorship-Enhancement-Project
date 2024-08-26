@@ -1,97 +1,88 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
+let idNumber = 0;
 
-// Creation of a mentor
-export const createMentor = async (req: any, res: any) => {
-  // Extract mentor details
-  const {
-    name, email_address, mentor_id, year, Program, availability, courses, // Added courses here
-  } = req.body;
+export const insertManyMentors = async (request: any, response: any) => {
+    const mentors = request.body.data;
+  
+    const validationErrors = validateMentors(mentors);
+    if (validationErrors.length > 0) {
+      return response.status(400).json({ error: 'Validation error', details: validationErrors });
+    }
+    try {
+      console.log("Calling create", mentors);
+      const createdMentors: any = callCreate(mentors);
+      response
+        .status(201)
+        .json({ message: "Mentors have been created", createdMentors });
+    } catch (error: any) {
+      console.log("entering error");
+      response.status(500).json({ error: error.message });
+    }
+  };
+  
+  // Function to perform custom validation
+  function validateMentors(mentors: Prisma.MentorCreateInput[]): string[] {
+    const errors: string[] = [];
+  
+    // Example of validation logic (you can customize this based on your requirements)
+    mentors.forEach((mentor, index) => {
+      if (!mentor.name) {
+        errors.push(`Mentor at index ${index} does not have a first name.`);
+      }
+      /*
+      if (!mentor.mentor_id) {
+        errors.push("Mentor id is necessary");
+      } 
+      if(typeof(mentor.mentor_id) !== "number") {
+        errors.push('Mentor id must be a number')
+      }
 
-  // Validate the mentor data
-  const validationErrors = validateMentor({
-    name,
-    email_address,
-    mentor_id,
-    year,
-    Program,
-    MentorAvailability: availability,
-    MentorCourse: courses, // Added courses here
-  });
+      if (mentor.MentorAvailability) {
+        errors.push('Must indicate mentor availibility')
+      }*/
 
-  // If there are validation errors, return a 400 status with the errors
-  if (validationErrors.length > 0) {
-    return res.status(400).json({ error: 'Validation error', details: validationErrors });
-  }
-
-  try {
-    // Create the mentor in the database
-    const createdMentor = await prisma.mentor.create({
-      data: {
-        name,
-        email_address,
-        mentor_id,
-        year,
-        Program,
-        MentorAvailability: {
-          // Create availability records for the mentor
-          create: availability.map((timeSlot: any) => ({
-            availability: {
-              create: {
-                start_time: new Date(timeSlot.start),
-                end_time: new Date(timeSlot.end),
-              },
-            },
-          })),
-        },
-        MentorCourse: {
-          // Connect the mentor to the specified courses
-          create: courses.map((courseId: number) => ({
-            course: {
-              connect: { id: courseId },
-            },
-          })),
-        },
-      },
+      if (!mentor.program) {
+        errors.push('Must enter current program of education')
+      }
     });
-    // Return a 201 status with the created mentor
-    res.status(201).json({ message: 'Mentor has been created', createdMentor });
-  } catch (error: any) {
-    // If there is an error
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Function to validate mentor data
-function validateMentor(mentor: Partial<Prisma.MentorCreateInput>): string[] {
-  const errors: string[] = [];
-
-  // Check if required fields are present and valid
-  if (!mentor.name) {
-    errors.push("Name is required.");
-  }
-  if (!mentor.email_address) {
-    errors.push("Email address is required.");
-  }
-  if (!mentor.mentor_id) {
-    errors.push("Mentor ID is required.");
-  }
-  if (typeof mentor.mentor_id !== 'number') {
-    errors.push("Mentor ID must be a number.");
-  }
-  if (!mentor.year) {
-    errors.push("Year is required.");
-  }
-  if (!mentor.Program) {
-    errors.push("Program is required.");
-  }
-  if (!mentor.MentorAvailability || !Array.isArray(mentor.MentorAvailability) || mentor.MentorAvailability.length === 0) {
-    errors.push("Availability is required");
-  }
-  if (!mentor.MentorCourse || !Array.isArray(mentor.MentorCourse) || mentor.MentorCourse.length === 0) {
-    errors.push("At least one course needed.");
+  
+    return errors;
   }
 
-  return errors;
-}
+  const callCreate = async (mentors: any) => {
+    for (const mentor of mentors) {
+      console.log("mentor", mentor);
+      for (const course of mentor.courses) {
+        console.log("course", course);
+        await prisma.course.upsert({
+          where: { course_code: course },
+          create: {
+            course_code: course,
+            course_name: course,
+          },
+          update: {},
+        });
+      }
+      
+      idNumber += 1
+ 
+      const createdMentors = await prisma.mentor.upsert({
+        where: { mentor_id: (idNumber) },
+        update: {},
+        create: {
+          mentor_id: idNumber,
+          name: mentor.name,
+          email_address: mentor.email_address,
+          program: mentor.program,
+          year: mentor.year,
+          MentorCourse: {
+            create: mentor.courses.map((course) => ({
+              course: { connect: { course_code: course } },
+            })),
+          },
+        },
+      });
+    }
+  };

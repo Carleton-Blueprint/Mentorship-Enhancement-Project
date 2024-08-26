@@ -334,4 +334,3 @@ function validateStudent(student: Partial<Prisma.StudentCreateInput>): string[] 
     }
     return errors;
 }
-

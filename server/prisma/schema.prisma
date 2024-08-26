@@ -21,7 +21,7 @@ model Mentor {
   name               String
   email_address      String
   year               String
-  Program            String
+  program            String
   MentorAvailability MentorAvailability[]
   MentorCourse       MentorCourse[]
 }

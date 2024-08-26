@@ -11,7 +11,8 @@ import {
 } from "./components/ui/table";
 import axios from "axios";
 import Papa from "papaparse";
-const serverUrl = process.env.REACT_APP_SERVER_URL;
+const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
+;
 
 interface ParsedData {
   [key: string]: string;
@@ -203,15 +204,13 @@ export const CsvButtonStudents = () => {
           accept={".csv"}
           onChange={handleOnChange}
         />
-        <label htmlFor="csvFileInput" className="custom-file-label">
-          Choose file
-        </label>
         {fileName && <span style={{ marginLeft: "10px" }}>{fileName}</span>}
         <Button
           className="bulk-add"
           onClick={(e) => {
             handleOnSubmit(e);
           }}
+          disabled={!fileName}
         >
           Bulk Add (CSV)
         </Button>
