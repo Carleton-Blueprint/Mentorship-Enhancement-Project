@@ -1,14 +1,12 @@
-import * as React from "react";
+import React, { useState } from "react";
 import { Login } from "./Login";
 import { Home } from "./Home";
 
 function App() {
+  const [loggedIn, setLoggedIn] = useState(null);
   return (
     <div>
-      <div>
-        <Login />
-      </div>
-      <div>{/* <Home /> */}</div>
+      <div>{loggedIn ? <Home /> : <Login />}</div>
     </div>
   );
 }

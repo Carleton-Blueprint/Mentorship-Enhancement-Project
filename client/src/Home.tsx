@@ -12,7 +12,7 @@ import { Button } from './components/ui/button';
 import {CsvButtonStudents} from './importCsvButtonStudents';
 import {CsvButtonMentors} from './importCsvButtonMentors';
 
-function App() {
+export const Home = () => {
   const [manageEntities, setManageEntities] = useState<Boolean>(true);
   const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
   
@@ -117,5 +117,3 @@ function App() {
     </>
   );
 }
-
-export default App;
