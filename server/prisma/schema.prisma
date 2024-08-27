@@ -1,10 +1,10 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 model Course {
@@ -21,67 +21,64 @@ model Mentor {
   name               String
   email_address      String
   year               String
-  program            String
+  Program            String
   MentorAvailability MentorAvailability[]
   MentorCourse       MentorCourse[]
 }
 
 model Availability {
   id                  Int                   @id @default(autoincrement())
+  end_time            DateTime
   day                 String
   start_time          DateTime
-  end_time            DateTime
   MentorAvailability  MentorAvailability[]
   StudentAvailability StudentAvailability[]
+
   @@unique([day, start_time, end_time], name: "unique_avail")
 }
 
 model Student {
-  id                   Int                   @id @default(autoincrement())
-  student_id           Int                   @unique
-  first_name           String
-  last_name            String
-  major                String
-  preferred_name       String
-  preferred_pronouns   String
-  email                String
-  year_level           String
-  StudentAvailability  StudentAvailability[]
-  StudentCourse        StudentCourse[]
+  id                  Int                   @id @default(autoincrement())
+  student_id          BigInt                @unique
+  first_name          String
+  last_name           String
+  email               String
+  StudentAvailability StudentAvailability[]
+  StudentCourse       StudentCourse[]
 }
 
 model MentorAvailability {
-  availability    Availability @relation(fields: [availability_id], references: [id])
   availability_id Int
-  mentor          Mentor       @relation(fields: [mentor_id], references: [id])
   mentor_id       Int
+  availability    Availability @relation(fields: [availability_id], references: [id])
+  mentor          Mentor       @relation(fields: [mentor_id], references: [id])
 
   @@unique([availability_id, mentor_id])
 }
 
 model StudentAvailability {
-  availability    Availability @relation(fields: [availability_id], references: [id])
   availability_id Int
-  student         Student      @relation(fields: [student_id], references: [id])
   student_id      Int
+  availability    Availability @relation(fields: [availability_id], references: [id])
+  student         Student      @relation(fields: [student_id], references: [id])
 
   @@unique([availability_id, student_id])
 }
 
 model MentorCourse {
-  mentor    Mentor @relation(fields: [mentor_id], references: [id])
   mentor_id Int
-  course    Course @relation(fields: [course_id], references: [id])
   course_id Int
+  course    Course @relation(fields: [course_id], references: [id])
+  mentor    Mentor @relation(fields: [mentor_id], references: [id])
 
   @@unique([mentor_id, course_id])
 }
 
 model StudentCourse {
-  student    Student @relation(fields: [student_id], references: [id])
   student_id Int
-  course     Course  @relation(fields: [course_id], references: [id])
   course_id  Int
+  course     Course  @relation(fields: [course_id], references: [id])
+  student    Student @relation(fields: [student_id], references: [id])
 
   @@unique([student_id, course_id])
 }

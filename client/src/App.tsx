@@ -3,7 +3,7 @@ import { Login } from "./Login";
 import { Home } from "./Home";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(true);
   return (
     <div>
       <div>{loggedIn ? <Home /> : <Login />}</div>
