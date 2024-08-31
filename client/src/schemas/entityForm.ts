@@ -14,11 +14,11 @@ export const FormSchema = z.object({
 })
 
 export const courseFormSchema = z.object({
-  course_code: z.string().min(1),
-  course_name: z.string().optional(),
+  courseCode: z.string().min(1),
+  courseName: z.string().optional(),
 })
 
 export const dateRangeFormSchema = z.object({
-  start_time: z.string().date(),
-  end_time: z.string().date(),
+  startDate: z.date(),
+  endDate: z.date(),
 })

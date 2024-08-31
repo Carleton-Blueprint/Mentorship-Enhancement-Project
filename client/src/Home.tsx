@@ -5,7 +5,8 @@ import "./Home.css";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { CsvButtonMentors } from "./importCsvButtonMentors";
 import { CsvButtonStudents } from "./importCsvButtonStudents";
-import {AddNewCourse} from "./AddNewCourse";
+import { AddNewCourse } from "./AddNewCourse";
+import { AddDateRange } from "./AddDateRange";
 
 export const Home = () => {
   const [manageEntities, setManageEntities] = useState<String>("student");
@@ -169,14 +170,12 @@ export const Home = () => {
                   ""
                 )}
               </TabsContent>
-              <TabsContent
-                className="flex flex-row"
-                value="course"
-              >
+              <TabsContent className="flex flex-row" value="course">
                 <AddNewCourse />
               </TabsContent>
-
-              <TabsContent className="flex flex-row" value="time"></TabsContent>
+              <TabsContent className="flex flex-row" value="time">
+                <AddDateRange />
+              </TabsContent>
             </div>
           </Tabs>
         </div>

@@ -37,12 +37,22 @@ model Availability {
   @@unique([day, start_time, end_time], name: "unique_avail")
 }
 
+model DateRange {
+  id         Int      @id @default(autoincrement())
+  start_time DateTime
+  end_time   DateTime
+}
+
 model Student {
   id                  Int                   @id @default(autoincrement())
-  student_id          BigInt                @unique
+  student_id          Int                   @unique
   first_name          String
   last_name           String
   email               String
+  major               String
+  preferred_name      String
+  preferred_pronouns  String
+  year_level          Int
   StudentAvailability StudentAvailability[]
   StudentCourse       StudentCourse[]
 }
