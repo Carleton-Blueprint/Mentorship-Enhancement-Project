@@ -17,3 +17,8 @@ export const courseFormSchema = z.object({
   course_code: z.string().min(1),
   course_name: z.string().optional(),
 })
+
+export const dateRangeFormSchema = z.object({
+  start_time: z.string().date(),
+  end_time: z.string().date(),
+})

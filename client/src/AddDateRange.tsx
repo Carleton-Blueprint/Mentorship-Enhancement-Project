@@ -14,14 +14,14 @@ import {
   FormMessage,
 } from "./components/ui/form";
 import { Input } from "./components/ui/input";
-import { courseFormSchema } from "./schemas/entityForm";
+import { dateRangeFormSchema } from "./schemas/entityForm";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
-export const AddNewCourse = () => {
-  const [courseCode, setCourseCode] = React.useState("");
-  const [courseName, setCourseName] = React.useState("");
-  const form = useForm<z.infer<typeof courseFormSchema>>({
-    resolver: zodResolver(courseFormSchema),
+export const AddDateRange = () => {
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
+  const form = useForm<z.infer<typeof dateRangeFormSchema>>({
+    resolver: zodResolver(dateRangeFormSchema),
     defaultValues: {
       course_code: "",
       course_name: "",
@@ -38,7 +38,7 @@ export const AddNewCourse = () => {
   const onSubmit = async () => {
     try {
       const response = await axios.post(`${serverUrl}/course/addCourse`, {
-        data: {courseCode, courseName},
+        data: { courseCode, courseName },
       });
     } catch (error) {
       console.log(error);
@@ -50,10 +50,10 @@ export const AddNewCourse = () => {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
-          name="course_code"
+          name="start_date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Course code</FormLabel>
+              <FormLabel>Start time </FormLabel>
               <FormControl>
                 <Input
                   onChange={handleCourseCodeChange}
