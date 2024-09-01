@@ -112,6 +112,10 @@ const callCreate = async (students: any) => {
         first_name: student.first_name,
         last_name: student.last_name,
         email: student.email,
+        major: student.major,
+        preferred_name: student.preferred_name,
+        preferred_pronouns: student.preferred_pronouns,
+        year_level: student.year_level,
         StudentCourse: {
           create: student.courses.map((course) => ({
             course: { connect: { course_code: course } },
@@ -229,11 +233,11 @@ const createStudent = async (student: any) => {
       student_id: student["student_id"],
       first_name: student["first_name"],
       last_name: student["last_name"],
-      // major: student["major"],
-      // preferred_name: student["preferred_name"],
-      // preferred_pronouns: student["preferred_pronouns"],
+      major: student["major"],
+      preferred_name: student["preferred_name"],
+      preferred_pronouns: student["preferred_pronouns"],
       email: student["email"],
-      // year_level: student["year_level"],
+      year_level: student["year_level"],
       StudentCourse: {
         create: student["StudentCourse"].map((course) => ({
           course: { connect: { course_code: course } },

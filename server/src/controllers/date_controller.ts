@@ -3,13 +3,13 @@ import { PrismaClient, Prisma } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const addDateRange = async (request: any, response: any) => {
-    const dateRange = request.body.data;
+    const data = request.body.data;
   
     // if (validationErrors.length > 0) {
     //   return response.status(400).json({ error: 'Validation error', details: validationErrors });
     // }
     try {
-      const createdDateRange: any = callCreateDateRange(start_time, end_time);
+      const createdDateRange: any = callCreateDateRange(data.dates);
       response
         .status(201)
         .json({ message: "date range has been created", createdDateRange});
@@ -20,11 +20,13 @@ export const addDateRange = async (request: any, response: any) => {
   };
   
 
-  const callCreateDateRange = async (start_time: any, end_time) => {
+  const callCreateDateRange = async (dateRange: any) => {
+    console.log("dateRange", dateRange);
     const createdDateRange = await prisma.dateRange.create({
         data: {
-            start_time: start_time,
-            end_time: end_time,
+            start_time: dateRange.startDate,
+            end_time: dateRange.endDate,
         }
     });
+    console.log("createdDateRange", createdDateRange)
   };
