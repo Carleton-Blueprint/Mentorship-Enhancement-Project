@@ -46,7 +46,6 @@ model DateRange {
 
 model Student {
   id                  Int                   @id @default(autoincrement())
-<<<<<<< HEAD
   student_id          Int                   @unique
   first_name          String
   last_name           String
@@ -55,12 +54,6 @@ model Student {
   preferred_name      String
   preferred_pronouns  String
   year_level          Int
-=======
-  student_id          BigInt                @unique
-  first_name          String
-  last_name           String
-  email               String
->>>>>>> e86705c (added login card)
   StudentAvailability StudentAvailability[]
   StudentCourse       StudentCourse[]
 }
