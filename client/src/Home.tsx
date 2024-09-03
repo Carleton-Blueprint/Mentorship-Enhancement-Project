@@ -2,11 +2,15 @@ import React, { useEffect, useState } from "react";
 import AddEntityCard from "./AddEntityCard";
 import "./Home.css";
 
+import axios, {AxiosResponse} from "axios";
+import { AddDateRange } from "./AddDateRange";
+import { AddNewCourse } from "./AddNewCourse";
+import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { CsvButtonMentors } from "./importCsvButtonMentors";
 import { CsvButtonStudents } from "./importCsvButtonStudents";
-import { AddNewCourse } from "./AddNewCourse";
-import { AddDateRange } from "./AddDateRange";
+import {ExportCsv} from "./ExportCsv";
+const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 export const Home = () => {
   const [manageEntities, setManageEntities] = useState<String>("student");
@@ -16,7 +20,7 @@ export const Home = () => {
   const [availability, setAvailability] = useState<boolean[][]>([[]]);
   const [coursesValid, setCoursesValid] = useState<Boolean>(true);
   const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
-
+  const [csv, setCsv] = useState<string>("");
   function plusIconClicked(
     event: React.MouseEvent<SVGSVGElement, MouseEvent>
   ): void {
@@ -41,9 +45,15 @@ export const Home = () => {
     }
   }
 
-  // function moveEntityTab(entity: string): void {
-  //   if (entity)
-  // }
+  const onGenerateCsv = async () => {
+    try {
+      const response = await axios.get(`${serverUrl}/query/generateCsv`);
+      console.log("query response.data", response.data);
+      setCsv(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   // Collapse the menu when manageEntities changes
   useEffect(() => {
@@ -52,9 +62,14 @@ export const Home = () => {
 
   return (
     <>
-      <header className="App-header">
-        <p>SSSC Early Warning Initiative (EWI) Admin</p>
-      </header>
+      <div>
+        <header className="App-header flex justify-between">
+          <p>SSSC Early Warning Initiative (EWI) Admin</p>
+          <div className="pr-10">
+            <Button onClick={onGenerateCsv}>Generate CSV</Button>
+          </div>
+        </header>
+      </div>
       <div className="flex justify-space-between h-full">
         <div className="justify-between w-full">
           <Tabs defaultValue="student">
@@ -177,6 +192,7 @@ export const Home = () => {
                 <AddDateRange />
               </TabsContent>
             </div>
+            <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg"><ExportCsv csvString={csv} /></div>
           </Tabs>
         </div>
       </div>

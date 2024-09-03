@@ -28,18 +28,13 @@ export const AddNewCourse = () => {
     },
   });
 
-  const handleCourseCodeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setCourseCode(e.target.value.trim());
-  };
-
-  const handleCourseNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setCourseName(e.target.value.trim());
-  };
-  const onSubmit = async () => {
+  const onSubmit = async (courses: any) => {
     try {
+      console.log("courses", courses)
       const response = await axios.post(`${serverUrl}/course/addCourse`, {
-        data: {courseCode, courseName},
+        data: {courses},
       });
+      console.log("data sent successfully")
     } catch (error) {
       console.log(error);
     }
@@ -56,9 +51,9 @@ export const AddNewCourse = () => {
               <FormLabel>Course code</FormLabel>
               <FormControl>
                 <Input
-                  onChange={handleCourseCodeChange}
+                  // onChange={handleCourseCodeChange}
                   placeholder="COMP1405"
-                  // {...field}
+                  {...field}
                 />
               </FormControl>
               <FormDescription></FormDescription>
@@ -74,9 +69,9 @@ export const AddNewCourse = () => {
               <FormLabel>Course name</FormLabel>
               <FormControl>
                 <Input
-                  onChange={handleCourseNameChange}
-                  placeholder="COMP1405"
-                  // {...field}
+                  // onChange={handleCourseNameChange}
+                  placeholder="Introduction to Computer Science"
+                  {...field}
                 />
               </FormControl>
               <FormDescription></FormDescription>

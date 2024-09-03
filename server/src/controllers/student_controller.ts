@@ -33,6 +33,7 @@ export const insertManyStudents = async (request: any, response: any) => {
   // }
   try {
     const createdStudents: any = callCreate(students);
+    console.log('createdStudents');
     response
       .status(201)
       .json({ message: "Students have been created", createdStudents });

@@ -30,7 +30,7 @@ const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 export const AddDateRange = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const {toast} = useToast();
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof dateRangeFormSchema>>({
     resolver: zodResolver(dateRangeFormSchema),
     defaultValues: {
@@ -47,7 +47,6 @@ export const AddDateRange = () => {
     const formattedEndDate = format(new Date(dates.endDate), "MM/dd/yyyy");
 
     console.log(formattedStartDate);
-
 
     toast({
       title: formattedStartDate,

@@ -17,11 +17,12 @@ model Course {
 
 model Mentor {
   id                 Int                  @id @default(autoincrement())
-  mentor_id          BigInt               @unique
+  mentor_id          Int                  @unique
   name               String
   email_address      String
   year               String
   Program            String
+  Pairings           Int                  @default(0)
   MentorAvailability MentorAvailability[]
   MentorCourse       MentorCourse[]
 }
