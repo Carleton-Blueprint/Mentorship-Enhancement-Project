@@ -5,6 +5,7 @@ import { studentRouter } from "./routes/studentRoutes.js";
 import { mentorRouter } from "./routes/mentorRoutes.js";
 import {dateRouter} from "./routes/dateRoutes.js";
 import {courseRouter} from "./routes/courseRoutes.js"
+import {queryRouter} from "./routes/queryRoutes.js"
 
 const app = express();
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/students", studentRouter);
 app.use("/mentors", mentorRouter);
 app.use("/date", dateRouter);
 app.use("/course", courseRouter);
+app.use("/query", queryRouter);
 
 app.listen(port, () => {
   console.log(`App is listening to port: ${port}`);

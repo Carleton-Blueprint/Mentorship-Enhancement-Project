@@ -24,8 +24,12 @@ interface Student {
   email: String;
   first_name: String;
   last_name: String;
+  major: String,
+  preferred_name: String,
+  preferred_pronouns: String,
   courses: Array<String>;
   availability: Availability[];
+  year_level: number;
 }
 
 interface Availability {
@@ -115,14 +119,12 @@ export const CsvButtonStudents = () => {
           times.forEach((time) => {
             parsedTimes.push(parseTimeRange(time));
           });
-          console.log("parsedTimes", parsedTimes);
           return {
             day,
             time_ranges: parsedTimes,
           };
         })
         .filter((day) => day.time_ranges.length > 0);
-      console.log("availability", availability);
 
       const courses = s[
         "Please list any courses in which you would like to improve your grades."
@@ -136,6 +138,10 @@ export const CsvButtonStudents = () => {
         email: s["Carleton Email"],
         first_name: s["First Name"],
         last_name: s["Last Name"],
+        major: s["What is your major?"],
+        preferred_name: s["Preferred Name"],
+        preferred_pronouns: s["Preferred Pronouns"],
+        year_level: parseInt(s["What is your year level?"]),
         courses,
         availability,
       };
@@ -159,7 +165,6 @@ export const CsvButtonStudents = () => {
       console.log("successful in sending data");
       setSent(true);
     } catch (error) {
-      console.log("in sendStudentData");
       console.log(error);
     }
   };

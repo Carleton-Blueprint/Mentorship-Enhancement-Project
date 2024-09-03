@@ -1,18 +1,13 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import { Button } from "./components/ui/button";
 import axios from "axios";
 import Papa from "papaparse";
+import React, { useState } from "react";
+import "./App.css";
+import { Button } from "./components/ui/button";
 
 // import { Availability, Course } from "./types";
-import { jsxs } from "react/jsx-runtime";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 interface ParsedData {
-  [key: string]: string;
-}
-
-interface CsvObject {
   [key: string]: string;
 }
 
