@@ -27,6 +27,9 @@ import { FormSchema } from "./schemas/entityForm";
 import CourseInput from './CourseInput';
 import AvailabilityTable from './AvailabilityTable';
 
+import axios from 'axios';
+const serverUrl = process.env.REACT_APP_SERVER_URL;
+
 type AddEntityCardProps = {
   entity: string;
   courses: string[];
@@ -86,6 +89,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
 
     // Do something with the form values.
     console.log(data)
+    sendStudentData(data)
     toast({
       // TODO: FIX THEME, MAKE THIS VISIBLE
       title: "You submitted the following values:",
@@ -95,6 +99,14 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
         </pre>
       ),
     })
+  }
+
+  const sendStudentData = async (student: z.infer<typeof FormSchema>) => {
+    try {
+      const response = await axios.post(`${serverUrl}/students/insertStudent`, {data: student});
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (

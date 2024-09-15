@@ -12,3 +12,13 @@ export const FormSchema = z.object({
   courses: z.array(z.string()),
   availability: z.array(z.array(z.boolean())),
 })
+
+export const courseFormSchema = z.object({
+  courseCode: z.string().min(1),
+  courseName: z.string().optional(),
+})
+
+export const dateRangeFormSchema = z.object({
+  startDate: z.date(),
+  endDate: z.date(),
+})

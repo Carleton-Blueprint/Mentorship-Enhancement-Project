@@ -31,9 +31,14 @@ CREATE TABLE "Availability" (
 -- CreateTable
 CREATE TABLE "Student" (
     "id" SERIAL NOT NULL,
-    "student_id" INTEGER NOT NULL,
+    "entity_number" INTEGER NOT NULL,
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
+    "major" TEXT NOT NULL,
+    "preferred_name" TEXT NOT NULL,
+    "preferred_pronouns" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "year_level" TEXT NOT NULL,
 
     CONSTRAINT "Student_pkey" PRIMARY KEY ("id")
 );
@@ -69,7 +74,7 @@ CREATE UNIQUE INDEX "Course_course_code_key" ON "Course"("course_code");
 CREATE UNIQUE INDEX "Mentor_mentor_id_key" ON "Mentor"("mentor_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Student_student_id_key" ON "Student"("student_id");
+CREATE UNIQUE INDEX "Student_entity_number_key" ON "Student"("entity_number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MentorAvailability_availability_id_mentor_id_key" ON "MentorAvailability"("availability_id", "mentor_id");
