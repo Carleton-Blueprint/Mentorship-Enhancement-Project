@@ -93,3 +93,9 @@ model StudentCourse {
 
   @@unique([student_id, course_id])
 }
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+}
