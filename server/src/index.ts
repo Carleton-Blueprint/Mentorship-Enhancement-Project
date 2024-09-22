@@ -27,7 +27,7 @@ app.use("/mentors", mentorRouter);
 app.use("/date", dateRouter);
 app.use("/course", courseRouter);
 app.use("/query", queryRouter);
-app.use("auth", authRouter);
+app.use("/auth", authRouter);
 
 app.listen(port, () => {
   console.log(`App is listening to port: ${port}`);

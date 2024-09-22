@@ -2,17 +2,18 @@ import React, { useEffect, useState } from "react";
 import AddEntityCard from "./AddEntityCard";
 import "./Home.css";
 
-import axios, {AxiosResponse} from "axios";
+import axios, { AxiosResponse } from "axios";
 import { AddDateRange } from "./AddDateRange";
 import { AddNewCourse } from "./AddNewCourse";
 import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { CsvButtonMentors } from "./importCsvButtonMentors";
 import { CsvButtonStudents } from "./importCsvButtonStudents";
-import {ExportCsv} from "./ExportCsv";
+import { ExportCsv } from "./ExportCsv";
+import  useSignOut from 'react-auth-kit/hooks/useSignOut';
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
-export const Home = () => {
+export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const [manageEntities, setManageEntities] = useState<String>("student");
   const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
 
@@ -55,6 +56,14 @@ export const Home = () => {
     }
   };
 
+  const signOut = useSignOut();
+
+  const handleSignOut = () => {
+    signOut(); // Clears the token and user state
+    setLoggedIn(false)
+    alert("You have been signed out");
+  };
+
   // Collapse the menu when manageEntities changes
   useEffect(() => {
     setMenuExpanded(false);
@@ -65,8 +74,11 @@ export const Home = () => {
       <div>
         <header className="App-header flex justify-between">
           <p>SSSC Early Warning Initiative (EWI) Admin</p>
-          <div className="pr-10">
-            <Button onClick={onGenerateCsv}>Generate CSV</Button>
+          <div className="">
+            <div className="flex flex-col items-center justify-center pr-10 ">
+              {loggedIn ? <Button className="mb-4" onClick={handleSignOut}>Logout</Button>: ""}
+              <Button onClick={onGenerateCsv}>Generate CSV</Button>
+            </div>
           </div>
         </header>
       </div>
@@ -192,7 +204,9 @@ export const Home = () => {
                 <AddDateRange />
               </TabsContent>
             </div>
-            <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg"><ExportCsv csvString={csv} /></div>
+            <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg">
+              <ExportCsv csvString={csv} />
+            </div>
           </Tabs>
         </div>
       </div>

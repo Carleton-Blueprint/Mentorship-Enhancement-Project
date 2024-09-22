@@ -1,25 +1,34 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import cors from "cors";
-import bodyParser from "body-parser";
-import crypto from "crypto";
+import dotenv from "dotenv";
 import { Request, Response } from "express";
+
+import { PrismaClient } from '@prisma/client';
+
+dotenv.config();
+const prisma = new PrismaClient();
+
+interface User {
+  id?: number,
+  email: string,
+  password: string,
+}
 
 // Mock user data (Replace with your database query)
 const users = [
   {
     id: 1,
-    email: "user@example.com",
+    email: "SSSC.cmail@carleton.ca",
     password: "$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36F9hOKcRMClKpJnDnCT9Cy", // 'password123'
   },
 ];
-const JWT_SECRET = crypto.randomBytes(64).toString("hex");
+const JWT_SECRET = process.env.JWT_SECRET
 
 export const loginRoute = async (req: Request, res: Response) => {
-  const { email, password } = JSON.parse(req.body.toString());
+  const { email, password } = req.body;
 
   // Find user by email
-  const user = users.find((u) => u.email === email);
+  const user = await findUserByEmail(email);
 
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
@@ -45,7 +54,8 @@ export const loginRoute = async (req: Request, res: Response) => {
     { expiresIn: "1h" }, // Token expires in 1 hour
     (err, token) => {
       if (err) throw err;
-      res.json();
+      // Send token and email in the response
+      res.json({ token, email: user.email });
     }
   );
 };
@@ -54,7 +64,7 @@ export const registerUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   // Check if user exists
-  const userExists = users.find((u) => u.email === email);
+  const userExists = await findUserByEmail(email)
 
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
@@ -64,13 +74,43 @@ export const registerUser = async (req: Request, res: Response) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Save user to database (replace with actual DB operation)
-  const newUser = {
-    id: users.length + 1,
-    email,
-    password: hashedPassword,
-  };
-  users.push(newUser);
-
+  createUser(email, hashedPassword)
   res.status(201).json({ message: "User registered successfully" });
 };
+
+
+
+const findUserByEmail = async (email: string): Promise<User> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email
+      },
+    });
+
+    if (user) {
+      return user;
+    } else {
+      console.log('User not found');
+    }
+  } catch (error) {
+    console.error('Error finding user:', error);
+  }
+}
+
+const createUser = async (email, password) => {
+  try {
+    const newUser = await prisma.user.create({
+      data: {
+        email,      
+        password
+      },
+    });
+
+    console.log('User created:', newUser);
+  } catch (error) {
+    console.error('Error creating user:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}

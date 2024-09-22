@@ -4,10 +4,12 @@ import { writeFile, appendFile } from "fs/promises";
 const prisma = new PrismaClient();
 
 export const generateCsv = async (request, response) => {
-  const matches = findMatches()
+  const matches = await findMatches();
+  updateMentorPairings(matches);
 
   const csvContent = convertToCsv(matches);
-  updateMentorPairings(matches);
+  console.log('csvContent', csvContent);
+
 
   try {
     return response.status(200).json(csvContent);
@@ -19,7 +21,7 @@ export const generateCsv = async (request, response) => {
 
 const findMatches = async () => {
   const mentorsWithMatchingStudents = await prisma.mentor.findMany({
-    take: 10,
+    // take: 10,
     include: {
       MentorCourse: {
         include: {
@@ -47,7 +49,7 @@ const findMatches = async () => {
       },
     },
   });
-
+  console.log("mentorsWithMatchingStudents", mentorsWithMatchingStudents);
   return mentorsWithMatchingStudents;
 };
 
@@ -67,10 +69,9 @@ const updateMentorPairings = async (matches: any) => {
   }
 }
 
-const convertToCsv = async (matches: any) => {
+const convertToCsv = (matches: any) => {
   const csvData = [];
   csvData.push(["Student Name", "Mentor Name", "Course in Common"]);
-
   matches.forEach((mentor) => {
     mentor.MentorCourse.forEach((mentorCourse) => {
       mentorCourse.course.StudentCourse.forEach((studentCourse) => {
@@ -84,8 +85,9 @@ const convertToCsv = async (matches: any) => {
   });
 
   const csvContent = csvData.map((row) => row.join(",")).join("\n");
+  return csvContent;
 
   //logging
-  await writeFile("mentors_students_courses.csv", csvContent);
-  console.log("CSV file generated: mentors_students_courses.csv");
+  // await writeFile("mentors_students_courses.csv", csvContent);
+  // console.log("CSV file generated: mentors_students_courses.csv");
 };

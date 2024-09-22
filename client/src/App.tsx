@@ -4,11 +4,12 @@ import { Home } from "./Home";
 import { Toaster } from "./components/ui/toaster"
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(true);
+  //default should be false
+  const [loggedIn, setLoggedIn] = useState(false);
   return (
     <div>
       <Toaster />
-      <div>{loggedIn ? <Home /> : <Login />}</div>
+      <div>{loggedIn ? <Home setLoggedIn={setLoggedIn} loggedIn={loggedIn} /> : <Login setLoggedIn={setLoggedIn} />}</div>
     </div>
   );
 }
