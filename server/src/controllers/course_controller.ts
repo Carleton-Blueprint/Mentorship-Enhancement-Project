@@ -23,9 +23,10 @@ export const addCourse = async (request: any, response: any) => {
 
 const callCreateCourse = async (courses: any) => {
   console.log("data", courses);
+  const upperCaseCourseCode = courses.courseCode.toUpperCase();
   const createdCourse = await prisma.course.create({
     data: {
-      course_code: courses.courseCode,
+      course_code: upperCaseCourseCode,
       course_name: courses.courseName,
     },
   });
