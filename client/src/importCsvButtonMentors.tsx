@@ -3,6 +3,7 @@ import Papa from "papaparse";
 import React, { useState } from "react";
 import "./App.css";
 import { Button } from "./components/ui/button";
+import {Table, TableRow, TableHead, TableHeader, TableBody, TableCell} from "./components/ui/table";
 
 // import { Availability, Course } from "./types";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
@@ -24,6 +25,7 @@ export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Mentor[]>([]);
   const [fileName, setFileName] = useState<String | "">("");
+  const [sent, setSent] = useState<Boolean>(false);
 
   const handleOnChange = (event: any) => {
     const text = event.target.files[0];
@@ -120,6 +122,7 @@ export const CsvButtonMentors = () => {
       const response = await axios.post(`${serverUrl}/mentors/insertMentors`, {
         data: csv,
       });
+      setSent(true);
       console.log("csv", csv);
       console.log("successful in sending data");
     } catch (error) {
@@ -181,6 +184,33 @@ export const CsvButtonMentors = () => {
           </Button>
         </div>
       <br />
+      <div>
+        {sent && (
+          <div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead></TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Program</TableHead>
+                  <TableHead>Courses</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((mentor: any) => (
+                  <TableRow>
+                    <TableCell>{mentor.name}</TableCell>
+                    <TableCell>{mentor.email}</TableCell>
+                    <TableCell>{mentor.program}</TableCell>
+                    <TableCell>{mentor.courses.join(', ')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

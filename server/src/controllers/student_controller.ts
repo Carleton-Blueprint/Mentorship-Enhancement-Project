@@ -17,6 +17,7 @@ interface Time {
 export const insertManyStudents = async (request: any, response: any) => {
   console.log("entering default controller");
   const students = request.body.data;
+  console.log('students', students)
   // Write to the file (replaces the file if it exists)
   try {
     await writeFile("output.txt", JSON.stringify(students));
@@ -25,12 +26,6 @@ export const insertManyStudents = async (request: any, response: any) => {
     console.error("Error writing to file", err);
   }
 
-  // const validationErrors = validateStudents(students);
-  // if (validationErrors.length > 0) {
-  //   return response
-  //     .status(400)
-  //     .json({ error: "Validation error", details: validationErrors });
-  // }
   try {
     const createdStudents: any = callCreate(students);
     console.log('createdStudents');
