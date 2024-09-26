@@ -2,7 +2,8 @@ import express from "express";
 export const mentorRouter = express.Router();
 
 import {
-    insertManyMentors
+    insertManyMentors,
+    updateMentorByID
 } from "../controllers/mentor_controller.js";
 import {
     deleteAll
@@ -10,3 +11,4 @@ import {
 
 mentorRouter.post('/deleteAllMentors', deleteAll);
 mentorRouter.post('/insertMentors', insertManyMentors);
+mentorRouter.post('/updateMentorByID', updateMentorByID);
