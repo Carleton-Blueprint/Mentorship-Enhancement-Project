@@ -10,4 +10,5 @@ const mentor_controller_js_1 = require("../controllers/mentor_controller.js");
 const reset_mentor_controller_js_1 = require("../controllers/reset_mentor_controller.js");
 exports.mentorRouter.post('/deleteAllMentors', reset_mentor_controller_js_1.deleteAll);
 exports.mentorRouter.post('/insertMentors', mentor_controller_js_1.insertManyMentors);
+exports.mentorRouter.post('/updateMentorByID', mentor_controller_js_1.updateMentorByID);
 //# sourceMappingURL=mentorRoutes.js.map
