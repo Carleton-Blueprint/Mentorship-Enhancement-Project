@@ -137,7 +137,7 @@ export const CsvButtonMentors = () => {
     (document.getElementById("csvFileInput") as HTMLInputElement).value = "";
   };
 
-  const TEMPORARY_DATA: Mentor = { "mentor_id": 12345, "name": "Bob", "email_address": "bob@bob.com", "year": "2001", "program": "Computer Science", "courses": "COURSELISTXYZ" }
+  const TEMPORARY_DATA: Mentor = { "mentor_id": 12345, "name": "Bob", "email_address": "bob@bob.com", "year": "2001", "program": "Computer Science", "courses": ["COMP2402", "COMP2804"] }
   
   const editMentorByID = async (mentor: Mentor) => {
     try {

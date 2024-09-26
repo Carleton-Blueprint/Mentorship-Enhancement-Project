@@ -14,6 +14,8 @@ import  useSignOut from 'react-auth-kit/hooks/useSignOut';
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 export const Home = ({ setLoggedIn, loggedIn }: any) => {
+  // setLoggedIn(false);
+
   const [manageEntities, setManageEntities] = useState<String>("student");
   const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
 
