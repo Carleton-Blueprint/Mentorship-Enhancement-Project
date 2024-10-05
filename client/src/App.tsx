@@ -5,7 +5,7 @@ import { Toaster } from "./components/ui/toaster"
 
 function App() {
   //default should be false
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(true);
   return (
     <div>
       <Toaster />

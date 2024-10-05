@@ -7,19 +7,39 @@ import { AddNewCourse } from "./AddNewCourse";
 import { MoreOptions } from "./MoreOptions";
 import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { ExportCsv } from "./ExportCsv";
-import  useSignOut from 'react-auth-kit/hooks/useSignOut';
 import { ManageMentors } from "./ManageMentors";
 import { ManageStudents } from "./ManageStudents";
+import { CsvButtonMentors } from "./importCsvButtonMentors";
+import { CsvButtonStudents } from "./importCsvButtonStudents";
+import { ExportMatchedCsv, ExportUnmatchedCsv } from "./ExportCsv";
+import useSignOut from "react-auth-kit/hooks/useSignOut";
+import { useToast } from "./hooks/use-toast";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const [manageEntities, setManageEntities] = useState<string>("Student");
   const [showMoreOptions, setShowMoreOptions] = useState<Boolean>(false);
 
+  const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
+  const { toast } = useToast();
+  const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
+
   const [coursesValid, setCoursesValid] = useState<Boolean>(true);
   const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
   const [csv, setCsv] = useState<string>("");
+  const [Matchedcsv, MatchedsetCsv] = useState<string>("");
+  const [Unmatchedcsv, UnmatchedsetCsv] = useState<string>("");
+  function plusIconClicked(
+    event: React.MouseEvent<SVGSVGElement, MouseEvent>
+  ): void {
+    const target = event.currentTarget;
+    if (menuExpanded) {
+      target.classList.remove("rotate-45");
+    } else {
+      target.classList.add("rotate-45");
+    }
+    setMenuExpanded(!menuExpanded);
+  }
 
   function manageEntityClicked(entity: string): void {
     setShowMoreOptions(false);
@@ -38,21 +58,40 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
     setShowMoreOptions(true);
   }
 
-  const onGenerateCsv = async () => { 
+  const onGenerateCsv = async () => {
     try {
       const response = await axios.get(`${serverUrl}/query/generateCsv`);
-      console.log("query response.data", response.data);
-      setCsv(response.data);
+      console.log("query response.data", response.data.csvContent);
+      MatchedsetCsv(response.data.csvContent);
+      UnmatchedsetCsv(response.data.unmatchedCsvContent);
+      csvAlert();
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const csvAlert = () => {
+    toast({
+      title: "CSV Generated",
+      description: "The CSV has been generated",
+      action: (
+        <div>
+          <div className=" bg-gray-200 align-right p-4 m-10 rounded-lg">
+            <ExportMatchedCsv csvString={Matchedcsv} />
+          </div>
+          <div className=" bg-gray-200 align-right p-4 m-10 rounded-lg">
+            <ExportUnmatchedCsv csvString={Unmatchedcsv} />
+          </div>
+        </div>
+      ),
+    });
   };
 
   const signOut = useSignOut();
 
   const handleSignOut = () => {
     signOut(); // Clears the token and user state
-    setLoggedIn(false)
+    setLoggedIn(false);
     alert("You have been signed out");
   };
 
@@ -63,7 +102,13 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
           <p>SSSC Mentor Enhancement Project</p>
           <div className="">
             <div className="flex flex-col items-center justify-center pr-10 ">
-              {loggedIn ? <Button className="mb-4" onClick={handleSignOut}>Logout</Button>: ""}
+              {loggedIn ? (
+                <Button className="mb-4" onClick={handleSignOut}>
+                  Logout
+                </Button>
+              ) : (
+                ""
+              )}
               <Button onClick={onGenerateCsv}>Generate CSV</Button>
             </div>
           </div>
@@ -118,46 +163,46 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
                   Manage Times
                 </TabsTrigger>
               </TabsList>
-                <Button
-                  onClick={() => openMoreOptions()}
-                  className="-mt-5 mr-10 h-full text-base rounded-full z-10 bg-grey text-dark-grey hover:bg-grey"
-                  value="moreOptions"
-                >
-                  More Options...
-                </Button>
+              <Button
+                onClick={() => openMoreOptions()}
+                className="-mt-5 mr-10 h-full text-base rounded-full z-10 bg-grey text-dark-grey hover:bg-grey"
+                value="moreOptions"
+              >
+                More Options...
+              </Button>
             </div>
-            {showMoreOptions ? <MoreOptions /> :
+            {showMoreOptions ? (
+              <MoreOptions />
+            ) : (
               <>
                 <div className="flex mx-12 py-3">
-                <TabsContent className="flex flex-row" value="Student">
-                  <ManageStudents
-                    entity="Student"
-                    coursesValid={coursesValid}
-                    setCoursesValid={setCoursesValid}
-                    availabilityValid={availabilityValid}
-                    setAvailabilityValid={setAvailabilityValid}
-                  />
-                </TabsContent>
-                <TabsContent className="flex flex-row" value="Mentor">
-                  <ManageMentors
-                    entity="Mentor"
-                    coursesValid={coursesValid}
-                    setCoursesValid={setCoursesValid}
-                    availabilityValid={availabilityValid}
-                    setAvailabilityValid={setAvailabilityValid}
-                  />
-                </TabsContent>
-                <TabsContent className="flex flex-row" value="Course">
-                  <AddNewCourse />
-                </TabsContent>
-                <TabsContent className="flex flex-row" value="Time">
-                  <AddDateRange />
-                </TabsContent>
-              </div>
-              <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg">
-                <ExportCsv csvString={csv} />
-              </div>
-            </>}
+                  <TabsContent className="flex flex-row" value="Student">
+                    <ManageStudents
+                      entity="Student"
+                      coursesValid={coursesValid}
+                      setCoursesValid={setCoursesValid}
+                      availabilityValid={availabilityValid}
+                      setAvailabilityValid={setAvailabilityValid}
+                    />
+                  </TabsContent>
+                  <TabsContent className="flex flex-row" value="Mentor">
+                    <ManageMentors
+                      entity="Mentor"
+                      coursesValid={coursesValid}
+                      setCoursesValid={setCoursesValid}
+                      availabilityValid={availabilityValid}
+                      setAvailabilityValid={setAvailabilityValid}
+                    />
+                  </TabsContent>
+                  <TabsContent className="flex flex-row" value="Course">
+                    <AddNewCourse />
+                  </TabsContent>
+                  <TabsContent className="flex flex-row" value="Time">
+                    <AddDateRange />
+                  </TabsContent>
+                </div>
+              </>
+            )}
           </Tabs>
         </div>
       </div>
