@@ -103,7 +103,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
 
   const sendStudentData = async (student: z.infer<typeof FormSchema>) => {
     try {
-      const response = await axios.post(`${serverUrl}/students/insertStudent`, {data: student});
+      await axios.post(`${serverUrl}/students/insertStudent`, {data: student});
     } catch (error) {
       console.log(error);
     }

@@ -50,11 +50,8 @@ interface Time {
 export const CsvButtonStudents = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Student[]>([]);
-  const [array, setArray] = useState<any[]>([]);
   const [fileName, setFileName] = useState<String>("");
   const [sent, setSent] = useState<Boolean>(false);
-
-  const fileReader = new FileReader();
 
   const handleOnChange = (event: any) => {
     setFile(event.target.files[0]);
@@ -158,7 +155,7 @@ export const CsvButtonStudents = () => {
 
   const sendStudentData = async (csv: Student[]) => {
     try {
-      const response = await axios.post(
+      await axios.post(
         `${serverUrl}/students/insertStudents`,
         { data: csv }
       );

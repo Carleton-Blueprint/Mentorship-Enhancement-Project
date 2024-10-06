@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import AddEntityCard from "./AddEntityCard";
 import "./Home.css";
 
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { AddDateRange } from "./AddDateRange";
 import { AddNewCourse } from "./AddNewCourse";
 import { Button } from "./components/ui/button";
