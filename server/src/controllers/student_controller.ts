@@ -112,6 +112,10 @@ const callCreate = async (students: any) => {
         first_name: student.first_name,
         last_name: student.last_name,
         email: student.email,
+        major: null,
+        preferred_name: null,
+        preferred_pronouns: null,
+        year_level: student["year_level"],
         StudentCourse: {
           create: student.courses.map((course) => ({
             course: { connect: { course_code: course } },

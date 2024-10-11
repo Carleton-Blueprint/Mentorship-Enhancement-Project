@@ -3,9 +3,8 @@ import "./App.css";
 import { Button } from "./components/ui/button";
 import axios from "axios";
 import Papa from "papaparse";
+import DeletePopUp from './deletePopUp';
 
-// import { Availability, Course } from "./types";
-import { jsxs } from "react/jsx-runtime";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 interface ParsedData {
@@ -25,10 +24,15 @@ interface Mentor {
   courses: any;
 }
 
+type thing = {
+  csvParse: (e:any) => void;
+}
+
 export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Mentor[]>([]);
   const [fileName, setFileName] = useState<String | "">("");
+  const [deleteAll, setDeleteAll] = useState(false);
 
   const handleOnChange = (event: any) => {
     const text = event.target.files[0];
@@ -41,7 +45,7 @@ export const CsvButtonMentors = () => {
     setFileName(event.target.files[0].name);
   };
 
-  const csvParse = async (e: any) => {
+  var csvParse = async (e: any) => {
     e.preventDefault();
     const courseList =[
       'BIOL 1010', 'BIOL 1103', 'BIOL 1104', 'BIOL 1105', 'BIOL 2002', 
@@ -128,9 +132,17 @@ export const CsvButtonMentors = () => {
       console.log("csv", csv);
       console.log("successful in sending data");
     } catch (error) {
-      console.log("in sendMentorData");
       console.log(error);
     }
+  };
+
+  const handleDelete = async (e: any) => {
+    try {
+        const response = await axios.post(`${serverUrl}/mentors/deleteAllMentors`);
+        setDeleteAll(false)
+      } catch (error) {
+        console.log(error);
+      }
   };
 
   const handleRemoveFile = () => {
@@ -138,7 +150,7 @@ export const CsvButtonMentors = () => {
     setFile(null);
     (document.getElementById("csvFileInput") as HTMLInputElement).value = "";
   };
-
+  
   return (
     <div style={{
       display: "flex",
@@ -185,7 +197,23 @@ export const CsvButtonMentors = () => {
             Bulk Add (CSV)
           </Button>
         </div>
+        <div>
+          <Button
+            className="Reset-all"
+            onClick={() => setDeleteAll(true)}
+          >
+            Reset All
+          </Button>
+          {deleteAll && (
+        <DeletePopUp 
+          handleDelete={handleDelete}
+          onClose={() => setDeleteAll(false)} 
+        />
+      )}
+        </div>
       <br />
     </div>
   );
 };
+
+
