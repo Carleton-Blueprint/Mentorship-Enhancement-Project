@@ -46,7 +46,7 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
     }
   }
 
-  const onGenerateCsv = async () => {
+  const onGenerateCsv = async () => { 
     try {
       const response = await axios.get(`${serverUrl}/query/generateCsv`);
       console.log("query response.data", response.data);
@@ -85,51 +85,60 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
       <div className="flex justify-space-between h-full">
         <div className="justify-between w-full">
           <Tabs defaultValue="student">
-            <TabsList className="tabs-list-overlap w-[600px] grid grid-cols-4 p-0 rounded-full text-dark-grey bg-grey">
-              <div
-                className={`absolute h-full transition-all duration-300 ease-in-out 
-    ${
-      manageEntities === "student"
-        ? "translate-x-0"
-        : manageEntities === "mentor"
-        ? "translate-x-[100%]"
-        : manageEntities === "course"
-        ? "translate-x-[200%]"
-        : manageEntities === "time"
-        ? "translate-x-[300%]"
-        : ""
-    } 
-    w-1/4 bg-red rounded-full select-none`}
-              ></div>
-              <TabsTrigger
+            <div className="flex justify-between">
+              <TabsList className="tabs-list-overlap w-[600px] grid grid-cols-4 p-0 rounded-full text-dark-grey bg-grey">
+                <div
+                  className={`absolute h-full transition-all duration-300 ease-in-out 
+                    ${
+                      manageEntities === "student"
+                        ? "translate-x-0"
+                        : manageEntities === "mentor"
+                        ? "translate-x-[100%]"
+                        : manageEntities === "course"
+                        ? "translate-x-[200%]"
+                        : manageEntities === "time"
+                        ? "translate-x-[300%]"
+                        : ""
+                    } 
+                    w-1/4 bg-red rounded-full select-none`}
+                ></div>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("student")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="student"
+                >
+                  Manage Students
+                </TabsTrigger>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("mentor")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="mentor"
+                >
+                  Manage Mentors
+                </TabsTrigger>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("course")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="course"
+                >
+                  Manage Courses
+                </TabsTrigger>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("time")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="time"
+                >
+                  Manage Times
+                </TabsTrigger>
+              </TabsList>
+              <Button
                 onClick={() => manageEntityClicked("student")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="student"
+                className="-mt-5 mr-10 h-full text-base rounded-full z-10 data-[state=active]:text-white"
+                value="moreOptions"
               >
-                Manage Students
-              </TabsTrigger>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("mentor")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="mentor"
-              >
-                Manage Mentors
-              </TabsTrigger>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("course")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="course"
-              >
-                Manage Courses
-              </TabsTrigger>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("time")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="time"
-              >
-                Manage Times
-              </TabsTrigger>
-            </TabsList>
+                More Options...
+              </Button>
+            </div>
             <div className="flex mx-12 py-3">
               <TabsContent className="flex flex-row" value="student">
                 <div className="flex max-h-12 mr-8">
@@ -202,6 +211,9 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
               </TabsContent>
               <TabsContent className="flex flex-row" value="time">
                 <AddDateRange />
+              </TabsContent>
+              <TabsContent className="flex flex-row" value="time">
+                <MoreOptions />
               </TabsContent>
             </div>
             <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg">
