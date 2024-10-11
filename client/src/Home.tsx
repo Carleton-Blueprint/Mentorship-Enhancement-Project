@@ -73,7 +73,7 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
     <>
       <div>
         <header className="App-header flex justify-between">
-          <p>SSSC Early Warning Initiative (EWI) Admin</p>
+          <p>SSSC Mentor Enhancement Project</p>
           <div className="">
             <div className="flex flex-col items-center justify-center pr-10 ">
               {loggedIn ? <Button className="mb-4" onClick={handleSignOut}>Logout</Button>: ""}
