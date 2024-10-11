@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns"; // Import the format function from date-fns
-import React, { ChangeEvent, useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "./components/ui/button";
@@ -28,8 +28,6 @@ import axios from "axios";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 export const AddDateRange = () => {
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const { toast } = useToast();
   const form = useForm<z.infer<typeof dateRangeFormSchema>>({
     resolver: zodResolver(dateRangeFormSchema),
@@ -65,7 +63,7 @@ export const AddDateRange = () => {
     });
 
     try {
-      const response = await axios.post(`${serverUrl}/date/addDateRange`, {
+      await axios.post(`${serverUrl}/date/addDateRange`, {
         data: { dates },
       });
     } catch (error) {

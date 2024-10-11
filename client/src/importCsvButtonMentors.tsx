@@ -119,7 +119,7 @@ export const CsvButtonMentors = () => {
   const sendMentorData = async (csv: Mentor[]) => {
     console.log('csv in sendMentordata', csv);
     try {
-      const response = await axios.post(`${serverUrl}/mentors/insertMentors`, {
+      await axios.post(`${serverUrl}/mentors/insertMentors`, {
         data: csv,
       });
       setSent(true);
