@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:postgres@localhost:5432/ewi-matching"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
