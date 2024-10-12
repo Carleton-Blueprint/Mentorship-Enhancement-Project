@@ -1,52 +1,44 @@
-import React, { useEffect, useState } from "react";
-import AddEntityCard from "./AddEntityCard";
+import React, { useState } from "react";
 import "./Home.css";
 
 import axios from "axios";
 import { AddDateRange } from "./AddDateRange";
 import { AddNewCourse } from "./AddNewCourse";
+import { MoreOptions } from "./MoreOptions";
 import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { CsvButtonMentors } from "./importCsvButtonMentors";
-import { CsvButtonStudents } from "./importCsvButtonStudents";
 import { ExportCsv } from "./ExportCsv";
 import  useSignOut from 'react-auth-kit/hooks/useSignOut';
+import { ManageMentors } from "./ManageMentors";
+import { ManageStudents } from "./ManageStudents";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 export const Home = ({ setLoggedIn, loggedIn }: any) => {
-  const [manageEntities, setManageEntities] = useState<String>("student");
-  const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
+  const [manageEntities, setManageEntities] = useState<string>("Student");
+  const [showMoreOptions, setShowMoreOptions] = useState<Boolean>(false);
 
-  const [courses, setCourses] = useState<string[]>([]);
-  const [availability, setAvailability] = useState<boolean[][]>([[]]);
   const [coursesValid, setCoursesValid] = useState<Boolean>(true);
   const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
   const [csv, setCsv] = useState<string>("");
-  function plusIconClicked(
-    event: React.MouseEvent<SVGSVGElement, MouseEvent>
-  ): void {
-    const target = event.currentTarget;
-    if (menuExpanded) {
-      target.classList.remove("rotate-45");
-    } else {
-      target.classList.add("rotate-45");
-    }
-    setMenuExpanded(!menuExpanded);
-  }
 
   function manageEntityClicked(entity: string): void {
-    if (entity === "student") {
-      setManageEntities("student");
-    } else if (entity === "mentor") {
-      setManageEntities("mentor");
-    } else if (entity === "course") {
-      setManageEntities("course");
-    } else if (entity === "time") {
-      setManageEntities("time");
+    setShowMoreOptions(false);
+    if (entity === "Student") {
+      setManageEntities("Student");
+    } else if (entity === "Mentor") {
+      setManageEntities("Mentor");
+    } else if (entity === "Course") {
+      setManageEntities("Course");
+    } else if (entity === "Time") {
+      setManageEntities("Time");
     }
   }
 
-  const onGenerateCsv = async () => {
+  function openMoreOptions(): void {
+    setShowMoreOptions(true);
+  }
+
+  const onGenerateCsv = async () => { 
     try {
       const response = await axios.get(`${serverUrl}/query/generateCsv`);
       console.log("query response.data", response.data);
@@ -64,11 +56,6 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
     alert("You have been signed out");
   };
 
-  // Collapse the menu when manageEntities changes
-  useEffect(() => {
-    setMenuExpanded(false);
-  }, [manageEntities]);
-
   return (
     <>
       <div>
@@ -84,129 +71,93 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
       </div>
       <div className="flex justify-space-between h-full">
         <div className="justify-between w-full">
-          <Tabs defaultValue="student">
-            <TabsList className="tabs-list-overlap w-[600px] grid grid-cols-4 p-0 rounded-full text-dark-grey bg-grey">
-              <div
-                className={`absolute h-full transition-all duration-300 ease-in-out 
-    ${
-      manageEntities === "student"
-        ? "translate-x-0"
-        : manageEntities === "mentor"
-        ? "translate-x-[100%]"
-        : manageEntities === "course"
-        ? "translate-x-[200%]"
-        : manageEntities === "time"
-        ? "translate-x-[300%]"
-        : ""
-    } 
-    w-1/4 bg-red rounded-full select-none`}
-              ></div>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("student")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="student"
-              >
-                Manage Students
-              </TabsTrigger>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("mentor")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="mentor"
-              >
-                Manage Mentors
-              </TabsTrigger>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("course")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="course"
-              >
-                Manage Courses
-              </TabsTrigger>
-              <TabsTrigger
-                onClick={() => manageEntityClicked("time")}
-                className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
-                value="time"
-              >
-                Manage Times
-              </TabsTrigger>
-            </TabsList>
-            <div className="flex mx-12 py-3">
-              <TabsContent className="flex flex-row" value="student">
-                <div className="flex max-h-12 mr-8">
-                  <p className="font-semibold text-nowrap">
-                    Add New <br /> Student
-                  </p>
-                  <svg
-                    className="plus-icon select-none size-6 text-[#949494] ml-2 mb-1"
-                    onClick={plusIconClicked}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                  </svg>
-                </div>
-
-                {menuExpanded ? "" : <CsvButtonStudents />}
-                {menuExpanded ? (
-                  <AddEntityCard
+          <Tabs defaultValue="Student">
+            <div className="flex justify-between">
+              <TabsList className="tabs-list-overlap w-[600px] grid grid-cols-4 p-0 rounded-full text-dark-grey bg-grey">
+                <div
+                  className={`absolute h-full transition-all duration-300 ease-in-out 
+                    ${
+                      manageEntities === "Student"
+                        ? "translate-x-0"
+                        : manageEntities === "Mentor"
+                        ? "translate-x-[100%]"
+                        : manageEntities === "Course"
+                        ? "translate-x-[200%]"
+                        : manageEntities === "Time"
+                        ? "translate-x-[300%]"
+                        : ""
+                    } 
+                    w-1/4 bg-red rounded-full select-none`}
+                ></div>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("Student")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="Student"
+                >
+                  Manage Students
+                </TabsTrigger>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("Mentor")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="Mentor"
+                >
+                  Manage Mentors
+                </TabsTrigger>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("Course")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="Course"
+                >
+                  Manage Courses
+                </TabsTrigger>
+                <TabsTrigger
+                  onClick={() => manageEntityClicked("Time")}
+                  className="h-full text-base rounded-full z-10 data-[state=active]:text-[white] transition-colors duration-300 ease-in-out"
+                  value="Time"
+                >
+                  Manage Times
+                </TabsTrigger>
+              </TabsList>
+                <Button
+                  onClick={() => openMoreOptions()}
+                  className="-mt-5 mr-10 h-full text-base rounded-full z-10 bg-grey text-dark-grey hover:bg-grey"
+                  value="moreOptions"
+                >
+                  More Options...
+                </Button>
+            </div>
+            {showMoreOptions ? <MoreOptions /> :
+              <>
+                <div className="flex mx-12 py-3">
+                <TabsContent className="flex flex-row" value="Student">
+                  <ManageStudents
                     entity="Student"
-                    courses={courses}
-                    setCourses={setCourses}
-                    availability={availability}
-                    setAvailability={setAvailability}
                     coursesValid={coursesValid}
                     setCoursesValid={setCoursesValid}
                     availabilityValid={availabilityValid}
                     setAvailabilityValid={setAvailabilityValid}
                   />
-                ) : (
-                  ""
-                )}
-              </TabsContent>
-              <TabsContent className="flex flex-row" value="mentor">
-                <div className="flex max-h-12 mr-8">
-                  <p className="font-semibold text-nowrap">
-                    Add New <br /> Mentor
-                  </p>
-                  <svg
-                    className="plus-icon select-none size-6 text-[#949494] ml-2 mb-1"
-                    onClick={plusIconClicked}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                  </svg>
-                </div>
-
-                {menuExpanded ? "" : <CsvButtonMentors />}
-                {menuExpanded ? (
-                  <AddEntityCard
+                </TabsContent>
+                <TabsContent className="flex flex-row" value="Mentor">
+                  <ManageMentors
                     entity="Mentor"
-                    courses={courses}
-                    setCourses={setCourses}
-                    availability={availability}
-                    setAvailability={setAvailability}
                     coursesValid={coursesValid}
                     setCoursesValid={setCoursesValid}
                     availabilityValid={availabilityValid}
                     setAvailabilityValid={setAvailabilityValid}
                   />
-                ) : (
-                  ""
-                )}
-              </TabsContent>
-              <TabsContent className="flex flex-row" value="course">
-                <AddNewCourse />
-              </TabsContent>
-              <TabsContent className="flex flex-row" value="time">
-                <AddDateRange />
-              </TabsContent>
-            </div>
-            <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg">
-              <ExportCsv csvString={csv} />
-            </div>
+                </TabsContent>
+                <TabsContent className="flex flex-row" value="Course">
+                  <AddNewCourse />
+                </TabsContent>
+                <TabsContent className="flex flex-row" value="Time">
+                  <AddDateRange />
+                </TabsContent>
+              </div>
+              <div className="w-[100px] bg-gray-200 align-right p-4 m-10 rounded-lg">
+                <ExportCsv csvString={csv} />
+              </div>
+            </>}
           </Tabs>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { Input } from './components/ui/input';
 import { Badge } from './components/ui/badge';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from './components/ui/form';
+import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from './components/ui/form';
 import { FormSchema } from "./schemas/entityForm";
 import { UseFormReturn } from 'react-hook-form';
 import { z } from "zod";
@@ -9,13 +9,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 type CourseInputProps = {
   form: UseFormReturn<z.infer<typeof FormSchema>>;
+  entity: string;
   courses: string[];
   setCourses: React.Dispatch<React.SetStateAction<string[]>>;
   coursesValid: Boolean;
   setCoursesValid: React.Dispatch<React.SetStateAction<Boolean>>;
 };
 
-const CourseInput: React.FC<CourseInputProps> = ({ form, courses, setCourses, coursesValid, setCoursesValid }) => {
+const CourseInput: React.FC<CourseInputProps> = ({ form, entity, courses, setCourses, coursesValid, setCoursesValid }) => {
   const [inputValue, setInputValue] = useState<string>('');
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -54,8 +55,15 @@ const CourseInput: React.FC<CourseInputProps> = ({ form, courses, setCourses, co
       render={({ field }) => (
         <FormItem>
           <div className={`required ${coursesValid ? "" : "text-red"}`}>
-            <FormLabel>Courses Needing Improvement</FormLabel>
+            <FormLabel>
+              {entity === "Student" ?
+                "Courses Needing Improvement"
+                :
+                "Eligible Courses"
+              }
+            </FormLabel>
           </div>
+          <FormDescription>Enter the course code, then press space to enter more courses.</FormDescription>
           <Input
             type="text"
             value={inputValue}

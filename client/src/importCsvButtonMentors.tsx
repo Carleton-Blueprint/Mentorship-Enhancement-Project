@@ -14,7 +14,7 @@ interface ParsedData {
 }
 
 interface Mentor {
-  //mentor_id: number;
+  mentor_id?: number;
   name: String;
   email_address: String;
   year: String;
@@ -189,28 +189,28 @@ export const CsvButtonMentors = () => {
         )}
       </form>
       <div>
-          <Button
-            className="bulk-add"
-            onClick={(e) => handleOnSubmit(e)}
-            disabled={!fileName}
-          >
-            Bulk Add (CSV)
-          </Button>
-        </div>
-        <div>
-          <Button
-            className="Reset-all"
-            onClick={() => setDeleteAll(true)}
-          >
-            Reset All
-          </Button>
-          {deleteAll && (
-        <DeletePopUp 
-          handleDelete={handleDelete}
-          onClose={() => setDeleteAll(false)} 
-        />
-      )}
-        </div>
+        <Button
+          className="bulk-add"
+          onClick={(e) => handleOnSubmit(e)}
+          disabled={!fileName}
+        >
+          Bulk Add (CSV)
+        </Button>
+      </div>
+      <div>
+        <Button
+          className="Reset-all"
+          onClick={() => setDeleteAll(true)}
+        >
+          Reset All
+        </Button>
+        {deleteAll && (
+          <DeletePopUp 
+            handleDelete={handleDelete}
+            onClose={() => setDeleteAll(false)} 
+          />
+        )}
+      </div>
       <br />
       <div>
         {sent && (

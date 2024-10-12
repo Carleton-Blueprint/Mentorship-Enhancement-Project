@@ -24,12 +24,6 @@
     transform: rotate(45deg);
   }
   
-  div.form-details {
-    font-size: 12px;
-    --tw-text-opacity: 1;
-    color: rgb(20 20 20 / var(--tw-text-opacity)) /* #141414 */;
-  }
-  
   div.required:after {
     content:" *";
     color: #D93831;
@@ -77,10 +71,6 @@
     @apply text-white;
     background-color: #006FE6BF;
   }
-  
-  /* table.timeslot-table {
-    margin-top: 8px !important;
-  } */
   
   tr:first-of-type td:first-of-type { /* top left */
     border-top-left-radius: 5px;

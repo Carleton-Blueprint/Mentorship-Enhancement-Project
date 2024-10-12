@@ -13,6 +13,10 @@ export const FormSchema = z.object({
   availability: z.array(z.array(z.boolean())),
 })
 
+export const EntityIDSchema = z.object({
+  entityID: z.string().min(1),
+})
+
 export const courseFormSchema = z.object({
   courseCode: z.string().min(1),
   courseName: z.string().optional(),
