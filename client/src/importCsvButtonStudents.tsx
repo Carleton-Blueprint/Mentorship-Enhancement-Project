@@ -11,6 +11,8 @@ import {
 } from "./components/ui/table";
 import axios from "axios";
 import Papa from "papaparse";
+import DeletePopUp from './deletePopUp';
+
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 ;
 
@@ -52,6 +54,7 @@ export const CsvButtonStudents = () => {
   const [data, setData] = useState<Student[]>([]);
   const [fileName, setFileName] = useState<String>("");
   const [sent, setSent] = useState<Boolean>(false);
+  const [deleteAll, setDeleteAll] = useState(false);
 
   const handleOnChange = (event: any) => {
     setFile(event.target.files[0]);
@@ -165,6 +168,15 @@ export const CsvButtonStudents = () => {
       console.log(error);
     }
   };
+
+  const handleDelete = async (e: any) => {
+    try {
+      const response = await axios.post(`${serverUrl}/students/deleteAllStudents`);
+      setDeleteAll(false)
+    } catch (error) {
+      console.log(error);
+    }
+  };
   
   const formatTime = (time: { hours: number, minutes: number }) => {
     const hours = time.hours % 12 || 12; // Convert to 12-hour format
@@ -216,6 +228,20 @@ export const CsvButtonStudents = () => {
         >
           Bulk Add (CSV)
         </Button>
+        {<span style={{ marginLeft: "10px" }}></span>}
+        <Button
+            className="Reset-all"
+            type="button"
+            onClick={() => setDeleteAll(true)}
+          >
+            Reset All
+         </Button>
+         {deleteAll && (
+          <DeletePopUp 
+            handleDelete={handleDelete}
+            onClose={() => setDeleteAll(false)} 
+          />
+      )}
       </form>
 
       <br />
