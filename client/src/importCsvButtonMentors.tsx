@@ -7,7 +7,6 @@ import { Button } from "./components/ui/button";
 import {Table, TableRow, TableHead, TableHeader, TableBody, TableCell} from "./components/ui/table";
 
 // import { Availability, Course } from "./types";
->>>>>>> main
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 interface ParsedData {
@@ -31,11 +30,8 @@ export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Mentor[]>([]);
   const [fileName, setFileName] = useState<String | "">("");
-<<<<<<< HEAD
   const [deleteAll, setDeleteAll] = useState(false);
-=======
   const [sent, setSent] = useState<Boolean>(false);
->>>>>>> main
 
   const handleOnChange = (event: any) => {
     const text = event.target.files[0];
