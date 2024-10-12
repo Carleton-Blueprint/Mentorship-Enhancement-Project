@@ -29,22 +29,20 @@ import AvailabilityTable from './AvailabilityTable';
 import axios from 'axios';
 const serverUrl = process.env.REACT_APP_SERVER_URL;
 
-type AddEntityCardProps = {
+type EditEntityCardProps = {
   entity: string;
-  courses: string[];
-  setCourses: React.Dispatch<React.SetStateAction<string[]>>;
-  availability: boolean[][];
-  setAvailability: React.Dispatch<React.SetStateAction<boolean[][]>>;
   coursesValid: Boolean;
   setCoursesValid: React.Dispatch<React.SetStateAction<Boolean>>;
   availabilityValid: Boolean;
   setAvailabilityValid: React.Dispatch<React.SetStateAction<Boolean>>;
 };
 
-const AddEntityCard: React.FC<AddEntityCardProps> = ({
-  entity, courses, setCourses, availability, setAvailability,
-  coursesValid, setCoursesValid, availabilityValid, setAvailabilityValid
+const EditEntityCard: React.FC<EditEntityCardProps> = ({
+  entity, coursesValid, setCoursesValid, availabilityValid, setAvailabilityValid
 }) => {
+  const [courses, setCourses] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<boolean[][]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [curEntityID, setCurEntityID] = useState<string>("");
 
@@ -92,10 +90,8 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
     form.setValue("availability", parsedResult.availability);
     
     // handle courses and availability
-    // setCourses(parsedResult.courses);
-    // setAvailability(parsedResult.availability);
-
-    console.log("form.getValues:", form.getValues.toString());
+    setCourses(parsedResult.courses);
+    setAvailability(parsedResult.availability);
     
     setIsLoading(false);
   }
@@ -143,6 +139,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
 
   const editStudentData = async (student: z.infer<typeof FormSchema>) => {
     try {
+      // TODO
       await axios.put(`${serverUrl}/students/editStudentByID`, { data: student });
     } catch (error) {
       console.log(error);
@@ -153,7 +150,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
     <div className="flex flex-col">
       <Form {...idForm}>
         <div className="w-full mb-6">
-          <form onSubmit={idForm.handleSubmit(lookupSubmit)} className="AddEntityCard mt-1 flex flex-col w-full">
+          <form onSubmit={idForm.handleSubmit(lookupSubmit)} className="EditEntityCard mt-1 flex flex-col w-full">
             <div className="form-row">
               <div className="form-field space-y-1 w-full">
                 <FormField
@@ -162,7 +159,6 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
                     <FormItem>
                       <div className="required"><FormLabel>Lookup by {entity} ID</FormLabel></div>
                       <FormControl><Input {...field} /></FormControl>
-                      <div className="form-details"></div>
                       <FormMessage /></FormItem>)} />
               </div>
             </div>
@@ -183,115 +179,113 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
               <span className="sr-only">Loading...</span>
             </div>
             :
-            <>
-              <Form {...form}>
-                <div className="w-full">
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="AddEntityCard mt-1 flex flex-col w-full">
-                    <div className="form-row">
-                      <div className="form-field space-y-1 w-full">
-                        <FormField
-                          control={form.control} name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="required"><FormLabel>{entity} Name</FormLabel></div>
-                              <FormControl><Input {...field} /></FormControl>
-                              <div className="form-details"><FormDescription>First</FormDescription></div>
-                              <FormMessage /></FormItem>)} />
-                      </div>
-                      <div className="form-field space-y-1 w-full">
-                        <FormField
-                          control={form.control} name="lastName"
-                          render={({ field }) => (
-                            <FormItem><FormLabel> </FormLabel>
-                              <FormControl><Input {...field} /></FormControl>
-                              <div className="form-details"><FormDescription>Last</FormDescription></div>
-                              <FormMessage /></FormItem>)} />
-                      </div>
-                      <div className="form-field space-y-1 w-full">
-                        <FormField
-                          control={form.control} name="preferredName"
-                          render={({ field }) => (
-                            <FormItem><FormLabel>Preferred Name</FormLabel>
-                              <FormControl><Input {...field} /></FormControl>
-                              <FormMessage /></FormItem>)} />
-                      </div>
-                      <div className="form-field space-y-1 w-2/5">
-                        <FormField
-                          control={form.control} name="preferredPronouns"
-                          render={({ field }) => (
-                            <FormItem><FormLabel>Preferred Pronouns</FormLabel>
-                              <FormControl><Input {...field} /></FormControl>
-                              <FormMessage /></FormItem>)} />
-                      </div>
+            <Form {...form}>
+              <div className="w-full">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="EditEntityCard mt-1 flex flex-col w-full">
+                  <div className="form-row">
+                    <div className="form-field space-y-1 w-full">
+                      <FormField
+                        control={form.control} name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="required"><FormLabel>{entity} Name</FormLabel></div>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormDescription>First</FormDescription>
+                            <FormMessage /></FormItem>)} />
                     </div>
-                    <div className="form-row">
-                      <div className="form-field space-y-1 w-full">
-                        <FormField
-                          control={form.control} name="email"
-                          render={({ field }) => (
-                            <FormItem><div className="required"><FormLabel>Email</FormLabel></div>
-                              <FormControl><Input {...field} /></FormControl>
-                              <FormMessage /></FormItem>)} />
-                      </div>
-                      <div className="form-field space-y-1 w-full">
-                        <FormField
-                          control={form.control} name="entityNumber"
-                          render={({ field }) => (
-                            <FormItem><div className="required"><FormLabel>{entity} Number</FormLabel></div>
-                              <FormControl><Input {...field} /></FormControl>
-                              <FormMessage /></FormItem>)} />
-                      </div>
-                      <div className="form-field space-y-1 w-1/3">
-                        <FormField
-                          control={form.control} name="yearLevel"
-                          render={({ field }) => (
-                            <FormItem><div className="required"><FormLabel>Year Level</FormLabel></div>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="1">1</SelectItem>
-                                  <SelectItem value="2">2</SelectItem>
-                                  <SelectItem value="3">3</SelectItem>
-                                  <SelectItem value="4">4</SelectItem>
-                                  <SelectItem value="5">5</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage /></FormItem>)} />
-                      </div>
-                      <div className="form-field space-y-1 w-full">
-                        <FormField
-                          control={form.control} name="major"
-                          render={({ field }) => (
-                            <FormItem><div className="required"><FormLabel>Major</FormLabel></div>
-                              <FormControl><Input {...field} /></FormControl>
-                              <FormMessage /></FormItem>)} />
-                      </div>
+                    <div className="form-field space-y-1 w-full">
+                      <FormField
+                        control={form.control} name="lastName"
+                        render={({ field }) => (
+                          <FormItem><FormLabel> </FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormDescription>Last</FormDescription>
+                            <FormMessage /></FormItem>)} />
                     </div>
-                    <div className="form-row">
-                      <div className="form-field space-y-1 w-full">
-                        <CourseInput form={form}
-                          courses={courses} setCourses={setCourses}
-                          coursesValid={coursesValid} setCoursesValid={setCoursesValid}
-                        />
-                      </div>
+                    <div className="form-field space-y-1 w-full">
+                      <FormField
+                        control={form.control} name="preferredName"
+                        render={({ field }) => (
+                          <FormItem><FormLabel>Preferred Name</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage /></FormItem>)} />
                     </div>
-                    <div className="form-row">
-                      <div className="form-field space-y-1 w-full">
-                        <AvailabilityTable form={form}
-                          availability={availability} setAvailability={setAvailability}
-                          availabilityValid={availabilityValid} setAvailabilityValid={setAvailabilityValid}
-                        />
-                      </div>
+                    <div className="form-field space-y-1 w-2/5">
+                      <FormField
+                        control={form.control} name="preferredPronouns"
+                        render={({ field }) => (
+                          <FormItem><FormLabel>Preferred Pronouns</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage /></FormItem>)} />
                     </div>
-                    <Button className="confirm" type="submit">Confirm</Button>
-                  </form>
-                </div>
-              </Form>
-            </>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field space-y-1 w-full">
+                      <FormField
+                        control={form.control} name="email"
+                        render={({ field }) => (
+                          <FormItem><div className="required"><FormLabel>Email</FormLabel></div>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage /></FormItem>)} />
+                    </div>
+                    <div className="form-field space-y-1 w-full">
+                      <FormField
+                        control={form.control} name="entityNumber"
+                        render={({ field }) => (
+                          <FormItem><div className="required"><FormLabel>Student Number</FormLabel></div>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage /></FormItem>)} />
+                    </div>
+                    <div className="form-field space-y-1 w-1/3">
+                      <FormField
+                        control={form.control} name="yearLevel"
+                        render={({ field }) => (
+                          <FormItem><div className="required"><FormLabel>Year Level</FormLabel></div>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1">1</SelectItem>
+                                <SelectItem value="2">2</SelectItem>
+                                <SelectItem value="3">3</SelectItem>
+                                <SelectItem value="4">4</SelectItem>
+                                <SelectItem value="5">5</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage /></FormItem>)} />
+                    </div>
+                    <div className="form-field space-y-1 w-full">
+                      <FormField
+                        control={form.control} name="major"
+                        render={({ field }) => (
+                          <FormItem><div className="required"><FormLabel>Major</FormLabel></div>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage /></FormItem>)} />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field space-y-1 w-full">
+                      <CourseInput form={form} entity={entity}
+                        courses={courses} setCourses={setCourses}
+                        coursesValid={coursesValid} setCoursesValid={setCoursesValid}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-field space-y-1 w-full">
+                      <AvailabilityTable form={form}
+                        availability={availability} setAvailability={setAvailability}
+                        availabilityValid={availabilityValid} setAvailabilityValid={setAvailabilityValid}
+                      />
+                    </div>
+                  </div>
+                  <Button className="confirm" type="submit">Confirm</Button>
+                </form>
+              </div>
+            </Form>
           }
         </>
       }
@@ -299,4 +293,4 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
   );
 }
 
-export default AddEntityCard;
+export default EditEntityCard;

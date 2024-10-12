@@ -17,8 +17,6 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const [manageEntities, setManageEntities] = useState<string>("Student");
   const [showMoreOptions, setShowMoreOptions] = useState<Boolean>(false);
 
-  const [courses, setCourses] = useState<string[]>([]);
-  const [availability, setAvailability] = useState<boolean[][]>([]);
   const [coursesValid, setCoursesValid] = useState<Boolean>(true);
   const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
   const [csv, setCsv] = useState<string>("");
@@ -134,10 +132,6 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
                 <TabsContent className="flex flex-row" value="Student">
                   <ManageStudents
                     entity="Student"
-                    courses={courses}
-                    setCourses={setCourses}
-                    availability={availability}
-                    setAvailability={setAvailability}
                     coursesValid={coursesValid}
                     setCoursesValid={setCoursesValid}
                     availabilityValid={availabilityValid}
@@ -147,10 +141,6 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
                 <TabsContent className="flex flex-row" value="Mentor">
                   <ManageMentors
                     entity="Mentor"
-                    courses={courses}
-                    setCourses={setCourses}
-                    availability={availability}
-                    setAvailability={setAvailability}
                     coursesValid={coursesValid}
                     setCoursesValid={setCoursesValid}
                     availabilityValid={availabilityValid}

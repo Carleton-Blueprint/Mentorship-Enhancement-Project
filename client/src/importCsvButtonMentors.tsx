@@ -137,20 +137,6 @@ export const CsvButtonMentors = () => {
     (document.getElementById("csvFileInput") as HTMLInputElement).value = "";
   };
 
-  const TEMPORARY_DATA: Mentor = { "mentor_id": 12345, "name": "Bob", "email_address": "bob@bob.com", "year": "2001", "program": "Computer Science", "courses": "COURSELISTXYZ" }
-  
-  const editMentorByID = async (mentor: Mentor) => {
-    try {
-      const response = await axios.post(`${serverUrl}/mentors/updateMentorByID`, {
-        data: mentor,
-      });
-      console.log("mentor", mentor);
-    } catch (error) {
-      console.log("in editMentorByID");
-      console.log(error);
-    }
-  };
-
   return (
     <div style={{
       display: "flex",
@@ -195,14 +181,6 @@ export const CsvButtonMentors = () => {
           disabled={!fileName}
         >
           Bulk Add (CSV)
-        </Button>
-      </div>
-      <div>
-        <Button
-          className="edit-mentor"
-          onClick={() => editMentorByID(TEMPORARY_DATA)}
-        >
-          Edit Mentor TEMPORARY
         </Button>
       </div>
       <br />

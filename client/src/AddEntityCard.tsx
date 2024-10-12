@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -31,10 +31,6 @@ const serverUrl = process.env.REACT_APP_SERVER_URL;
 
 type AddEntityCardProps = {
   entity: string;
-  courses: string[];
-  setCourses: React.Dispatch<React.SetStateAction<string[]>>;
-  availability: boolean[][];
-  setAvailability: React.Dispatch<React.SetStateAction<boolean[][]>>;
   coursesValid: Boolean;
   setCoursesValid: React.Dispatch<React.SetStateAction<Boolean>>;
   availabilityValid: Boolean;
@@ -42,9 +38,11 @@ type AddEntityCardProps = {
 };
 
 const AddEntityCard: React.FC<AddEntityCardProps> = ({
-  entity, courses, setCourses, availability, setAvailability,
-  coursesValid, setCoursesValid, availabilityValid, setAvailabilityValid
+  entity, coursesValid, setCoursesValid, availabilityValid, setAvailabilityValid
 }) => {
+  const [courses, setCourses] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<boolean[][]>([]);
+  
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -110,7 +108,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
                   <FormItem>
                     <div className="required"><FormLabel>{entity} Name</FormLabel></div>
                     <FormControl><Input {...field} /></FormControl>
-                    <div className="form-details"><FormDescription>First</FormDescription></div>
+                    <FormDescription>First</FormDescription>
                     <FormMessage /></FormItem>)} />
             </div>
             <div className="form-field space-y-1 w-full">
@@ -119,7 +117,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
                 render={({ field }) => (
                   <FormItem><FormLabel> </FormLabel>
                     <FormControl><Input {...field} /></FormControl>
-                    <div className="form-details"><FormDescription>Last</FormDescription></div>
+                    <FormDescription>Last</FormDescription>
                     <FormMessage /></FormItem>)} />
             </div>
             <div className="form-field space-y-1 w-full">
@@ -152,7 +150,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
               <FormField
                 control={form.control} name="entityNumber"
                 render={({ field }) => (
-                  <FormItem><div className="required"><FormLabel>{entity} Number</FormLabel></div>
+                  <FormItem><div className="required"><FormLabel>Student Number</FormLabel></div>
                     <FormControl><Input {...field} /></FormControl>
                     <FormMessage /></FormItem>)} />
             </div>
@@ -188,7 +186,7 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
           </div>
           <div className="form-row">
             <div className="form-field space-y-1 w-full">
-              <CourseInput form={form}
+              <CourseInput form={form} entity={entity}
                 courses={courses} setCourses={setCourses}
                 coursesValid={coursesValid} setCoursesValid={setCoursesValid}
               />
