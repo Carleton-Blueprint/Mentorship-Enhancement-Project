@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import { Button } from "./components/ui/button";
 import axios from "axios";
 import Papa from "papaparse";
+<<<<<<< HEAD
 import DeletePopUp from './deletePopUp';
 
+=======
+import React, { useState } from "react";
+import "./App.css";
+import { Button } from "./components/ui/button";
+import {Table, TableRow, TableHead, TableHeader, TableBody, TableCell} from "./components/ui/table";
+
+// import { Availability, Course } from "./types";
+>>>>>>> main
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 interface ParsedData {
-  [key: string]: string;
-}
-
-interface CsvObject {
   [key: string]: string;
 }
 
@@ -32,7 +34,11 @@ export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Mentor[]>([]);
   const [fileName, setFileName] = useState<String | "">("");
+<<<<<<< HEAD
   const [deleteAll, setDeleteAll] = useState(false);
+=======
+  const [sent, setSent] = useState<Boolean>(false);
+>>>>>>> main
 
   const handleOnChange = (event: any) => {
     const text = event.target.files[0];
@@ -126,9 +132,10 @@ export const CsvButtonMentors = () => {
   const sendMentorData = async (csv: Mentor[]) => {
     console.log('csv in sendMentordata', csv);
     try {
-      const response = await axios.post(`${serverUrl}/mentors/insertMentors`, {
+      await axios.post(`${serverUrl}/mentors/insertMentors`, {
         data: csv,
       });
+      setSent(true);
       console.log("csv", csv);
       console.log("successful in sending data");
     } catch (error) {
@@ -212,6 +219,33 @@ export const CsvButtonMentors = () => {
       )}
         </div>
       <br />
+      <div>
+        {sent && (
+          <div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead></TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Program</TableHead>
+                  <TableHead>Courses</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((mentor: any) => (
+                  <TableRow>
+                    <TableCell>{mentor.name}</TableCell>
+                    <TableCell>{mentor.email}</TableCell>
+                    <TableCell>{mentor.program}</TableCell>
+                    <TableCell>{mentor.courses.join(', ')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

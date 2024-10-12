@@ -43,9 +43,9 @@ export const insertManyMentors = async (request: any, response: any) => {
         errors.push('Must indicate mentor availibility')
       }*/
 
-      if (!mentor.program) {
-        errors.push('Must enter current program of education')
-      }
+      // if (!mentor.program) {
+      //   errors.push('Must enter current program of education')
+      // }
     });
   
     return errors;
@@ -75,7 +75,7 @@ export const insertManyMentors = async (request: any, response: any) => {
           mentor_id: idNumber,
           name: mentor.name,
           email_address: mentor.email_address,
-          program: mentor.program,
+          Program: mentor.program,
           year: mentor.year,
           MentorCourse: {
             create: mentor.courses.map((course) => ({
