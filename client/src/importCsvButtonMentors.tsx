@@ -1,9 +1,6 @@
 import axios from "axios";
 import Papa from "papaparse";
-<<<<<<< HEAD
 import DeletePopUp from './deletePopUp';
-
-=======
 import React, { useState } from "react";
 import "./App.css";
 import { Button } from "./components/ui/button";
