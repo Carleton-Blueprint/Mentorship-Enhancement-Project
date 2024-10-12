@@ -18,7 +18,6 @@ import {
   FormLabel,
   FormMessage,
 } from "./components/ui/form";
-import { toast } from "./components/ui/use-toast"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -58,11 +57,10 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
       yearLevel: "",
       major: "",
       courses: [],
-      // courses: "",
-      availability: [],
+      availability: [[]],
     },
   });
-
+  
   function onSubmit(data: z.infer<typeof FormSchema>) {
     // confirm all courses are of valid format
     let coursesValid = false;
@@ -90,15 +88,6 @@ const AddEntityCard: React.FC<AddEntityCardProps> = ({
     // Do something with the form values.
     console.log(data)
     sendStudentData(data)
-    toast({
-      // TODO: FIX THEME, MAKE THIS VISIBLE
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
   }
 
   const sendStudentData = async (student: z.infer<typeof FormSchema>) => {
