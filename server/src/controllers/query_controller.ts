@@ -45,7 +45,7 @@ export const generateCsv = async (request, response) => {
 
 const findMatches = async () => {
   try {
-    // Fetch all students with their courses
+    // Fetch all students with their courses and availability
     const students = await prisma.student.findMany({
       include: {
         StudentCourse: {
@@ -61,7 +61,9 @@ const findMatches = async () => {
 
     // Loop through each student
     for (const student of students) {
+      console.log("student", student)
       const studentCourseIds = student.StudentCourse.map((sc) => sc.course_id);
+      console.log('studentCourseIds', studentCourseIds);
 
       // Find all mentors who have taken any of the student's courses
       const mentors = await prisma.mentor.findMany({
@@ -81,7 +83,20 @@ const findMatches = async () => {
         },
       });
 
-      // Find the mentor with the most overlapping courses
+      console.log('mentors', mentors.length);
+
+      // If there are no mentors, mark the student as unmatched
+      if (mentors.length === 0) {
+        unmatchedStudents.push({
+          studentId: student.student_id,
+          studentEmail: student.email,
+          studentFirstName: student.first_name,
+          studentLastName: student.last_name,
+        });
+        continue;
+      }
+
+      // Find the mentor with the most overlapping courses but with fewer pairings
       let bestMentor = null;
       let maxOverlap = 0;
 
@@ -91,14 +106,20 @@ const findMatches = async () => {
           mentorCourseIds.includes(courseId)
         );
 
-        if (overlappingCourses.length > maxOverlap) {
+        const overlapCount = overlappingCourses.length;
+
+        // Pick the mentor with the most overlaps and fewer pairings
+        if (
+          (overlapCount > maxOverlap) ||
+          (overlapCount === maxOverlap && mentor.Pairings < bestMentor?.Pairings)
+        ) {
           bestMentor = mentor;
-          maxOverlap = overlappingCourses.length;
+          maxOverlap = overlapCount;
         }
       });
 
       if (bestMentor && maxOverlap > 0) {
-        // Record the best match (student to mentor with most overlapping courses)
+        // Record the best match (student to mentor with most overlapping courses and least pairings)
         const matchedCourses = student.StudentCourse.filter((sc) =>
           bestMentor.MentorCourse.some((mc) => mc.course_id === sc.course_id)
         );
@@ -115,6 +136,12 @@ const findMatches = async () => {
           courseName: matchedCourses
             .map((mc) => mc.course.course_name)
             .join(", "), // List of matched courses
+        });
+
+        // Increment the mentor's pairings
+        await prisma.mentor.update({
+          where: { mentor_id: bestMentor.mentor_id },
+          data: { Pairings: { increment: 1 } }, // Increment the Pairings count
         });
       } else {
         // If no mentor is found, mark the student as unmatched
@@ -133,6 +160,8 @@ const findMatches = async () => {
     throw new Error("Failed to match students with mentors");
   }
 };
+
+
 
 
 // Function to convert matches to CSV format for frontend

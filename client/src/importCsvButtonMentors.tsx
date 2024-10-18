@@ -4,17 +4,16 @@ import DeletePopUp from './deletePopUp';
 import React, { useState } from "react";
 import "./App.css";
 import { Button } from "./components/ui/button";
-import {Table, TableRow, TableHead, TableHeader, TableBody, TableCell} from "./components/ui/table";
+import { Table, TableRow, TableHead, TableHeader, TableBody, TableCell } from "./components/ui/table";
 
-// import { Availability, Course } from "./types";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
 interface ParsedData {
   [key: string]: string;
 }
 
-interface Mentor {
-  mentor_id?: number;
+export interface Mentor {
+  mentor_id: number;
   name: String;
   email_address: String;
   year: String;
@@ -22,23 +21,19 @@ interface Mentor {
   courses: any;
 }
 
-type thing = {
-  csvParse: (e:any) => void;
-}
-
 export const CsvButtonMentors = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [data, setData] = useState<Mentor[]>([]);
   const [fileName, setFileName] = useState<String | "">("");
   const [deleteAll, setDeleteAll] = useState(false);
+  const [data, setData] = useState<Mentor[]>([]);
   const [sent, setSent] = useState<Boolean>(false);
+
 
   const handleOnChange = (event: any) => {
     const text = event.target.files[0];
     if (typeof text === "string") {
       const lines = text.split("\n");
       const modifiedText = lines.slice(5).join("\n");
-      console.log("modifiedText", modifiedText);
     }
     setFile(event.target.files[0]);
     setFileName(event.target.files[0].name);
@@ -46,7 +41,7 @@ export const CsvButtonMentors = () => {
 
   var csvParse = async (e: any) => {
     e.preventDefault();
-    const courseList =[
+    const courseList = [
       'BIOL 1010', 'BIOL 1103', 'BIOL 1104', 'BIOL 1105', 'BIOL 2002', 
       'BIOL 2005', 'BIOL 2104', 'BIOL 2200', 'BIOL 2201', 'BIOL 2303', 
       'BIOL 2600', 'CHEM 1001', 'CHEM 1002', 'CHEM 1004', 'CHEM 1006',
@@ -65,9 +60,8 @@ export const CsvButtonMentors = () => {
       'PHYS 1004', 'PHYS 1007', 'PHYS 1008', 'PHYS 1901', 'PHYS 2202', 
       'PHYS 2305', 'PHYS 2401', 'PHYS 2604', 'STAT 2507', 'STAT 2509', 
       'STAT 2607', 'STAT 2655'
-  ];
+    ];
 
-    console.log("file", file);
     if (file) {
       Papa.parse(file, {
         header: true,
@@ -82,10 +76,9 @@ export const CsvButtonMentors = () => {
             row["course"] = [];
 
             courseList.forEach((course) => {
-              if (course !== undefined)
-                if (row[course] === "Yes" || row[course] === "In Progress") {
-                  row["course"].push(course);
-                }
+              if (course !== undefined && (row[course] === "Yes" || row[course] === "In Progress")) {
+                row["course"].push(course);
+              }
             });
 
             courseList.forEach((course) => {
@@ -94,6 +87,7 @@ export const CsvButtonMentors = () => {
           });
 
           const toSend = mapToFields(rows as ParsedData[]);
+          console.log('toSend', toSend);
 
           setData(toSend);
           sendMentorData(toSend); // Send data immediately after parsing
@@ -108,6 +102,7 @@ export const CsvButtonMentors = () => {
   const mapToFields = (mentors: ParsedData[]): Mentor[] => {
     return mentors.map((s: ParsedData): Mentor => {
       return {
+        mentor_id: parseInt(s["Student ID"]),
         name: s["Full Name"],
         email_address: s["Email Address"],
         program: s["Program"],
@@ -138,11 +133,11 @@ export const CsvButtonMentors = () => {
 
   const handleDelete = async (e: any) => {
     try {
-        const response = await axios.post(`${serverUrl}/mentors/deleteAllMentors`);
-        setDeleteAll(false)
-      } catch (error) {
-        console.log(error);
-      }
+      await axios.post(`${serverUrl}/mentors/deleteAllMentors`);
+      setDeleteAll(false);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -152,12 +147,7 @@ export const CsvButtonMentors = () => {
   };
   
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "10px", 
-    }} >
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }} >
       <form>
         <input
           className={"custom-file-input"}
@@ -167,25 +157,20 @@ export const CsvButtonMentors = () => {
           onChange={handleOnChange}
         />
         {fileName && (
-            <span style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px", 
-              }}>
-              {fileName}
-              <span
+          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+            {fileName}
+            <span
               style={{
                 cursor: "pointer",
                 color: "red",
                 fontWeight: "bold",
                 fontSize: "24px",
               }}
-                onClick={handleRemoveFile}
-              >
-                &times;
-              </span>
-        </span>
+              onClick={handleRemoveFile}
+            >
+              &times;
+            </span>
+          </span>
         )}
       </form>
       <div>
@@ -242,5 +227,3 @@ export const CsvButtonMentors = () => {
     </div>
   );
 };
-
-

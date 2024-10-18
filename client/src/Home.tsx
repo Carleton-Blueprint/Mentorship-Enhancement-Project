@@ -9,8 +9,8 @@ import { Button } from "./components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { ManageMentors } from "./ManageMentors";
 import { ManageStudents } from "./ManageStudents";
-import { CsvButtonMentors } from "./importCsvButtonMentors";
-import { CsvButtonStudents } from "./importCsvButtonStudents";
+import { CsvButtonMentors, Mentor } from "./importCsvButtonMentors";
+import { CsvButtonStudents, Student } from "./importCsvButtonStudents";
 import { ExportMatchedCsv, ExportUnmatchedCsv } from "./ExportCsv";
 import useSignOut from "react-auth-kit/hooks/useSignOut";
 import { useToast } from "./hooks/use-toast";
@@ -19,19 +19,17 @@ const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const [manageEntities, setManageEntities] = useState<string>("Student");
   const [showMoreOptions, setShowMoreOptions] = useState<Boolean>(false);
-
-  const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
   const { toast } = useToast();
   const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
-
   const [coursesValid, setCoursesValid] = useState<Boolean>(true);
   const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
-  const [csv, setCsv] = useState<string>("");
-  const [Matchedcsv, MatchedsetCsv] = useState<string>("");
-  const [Unmatchedcsv, UnmatchedsetCsv] = useState<string>("");
-  function plusIconClicked(
-    event: React.MouseEvent<SVGSVGElement, MouseEvent>
-  ): void {
+  const [Matchedcsv, setMatchedCsv] = useState<string>("");
+  const [Unmatchedcsv, setUnmatchedCsv] = useState<string>("");
+
+  // const [studentData, setStudentData] = useState<Student[]>([]);
+  // const [studentSent, setStudentSent] = useState<Boolean>(false);
+
+  function plusIconClicked(event: React.MouseEvent<SVGSVGElement, MouseEvent>): void {
     const target = event.currentTarget;
     if (menuExpanded) {
       target.classList.remove("rotate-45");
@@ -43,15 +41,7 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
 
   function manageEntityClicked(entity: string): void {
     setShowMoreOptions(false);
-    if (entity === "Student") {
-      setManageEntities("Student");
-    } else if (entity === "Mentor") {
-      setManageEntities("Mentor");
-    } else if (entity === "Course") {
-      setManageEntities("Course");
-    } else if (entity === "Time") {
-      setManageEntities("Time");
-    }
+    setManageEntities(entity);
   }
 
   function openMoreOptions(): void {
@@ -61,26 +51,29 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const onGenerateCsv = async () => {
     try {
       const response = await axios.get(`${serverUrl}/query/generateCsv`);
+      if (!response.data) {
+        throw new Error("No CSV data received");
+      }
       console.log("query response.data", response.data.csvContent);
-      MatchedsetCsv(response.data.csvContent);
-      UnmatchedsetCsv(response.data.unmatchedCsvContent);
-      csvAlert();
+      setMatchedCsv(response.data.csvContent);
+      setUnmatchedCsv(response.data.unmatchedCsvContent);
+      csvAlert(response.data.csvContent, response.data.unmatchedCsvContent);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const csvAlert = () => {
+  const csvAlert = (matched: string, unmatched: string) => {
     toast({
       title: "CSV Generated",
       description: "The CSV has been generated",
       action: (
         <div>
           <div className=" bg-gray-200 align-right p-4 m-10 rounded-lg">
-            <ExportMatchedCsv csvString={Matchedcsv} />
+            <ExportMatchedCsv csvString={matched} />
           </div>
           <div className=" bg-gray-200 align-right p-4 m-10 rounded-lg">
-            <ExportUnmatchedCsv csvString={Unmatchedcsv} />
+            <ExportUnmatchedCsv csvString={unmatched} />
           </div>
         </div>
       ),

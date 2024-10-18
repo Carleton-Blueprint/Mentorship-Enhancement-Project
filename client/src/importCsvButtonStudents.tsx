@@ -20,7 +20,7 @@ interface ParsedData {
   [key: string]: string;
 }
 
-interface Student {
+export interface Student {
   id: number;
   student_id: number;
   email: String;
@@ -52,9 +52,12 @@ interface Time {
 export const CsvButtonStudents = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Student[]>([]);
+  const [array, setArray] = useState<any[]>([]);
   const [fileName, setFileName] = useState<String>("");
-  const [sent, setSent] = useState<Boolean>(false);
   const [deleteAll, setDeleteAll] = useState(false);
+  const [sent, setSent] = useState<Boolean>(false);
+
+  const fileReader = new FileReader();
 
   const handleOnChange = (event: any) => {
     setFile(event.target.files[0]);

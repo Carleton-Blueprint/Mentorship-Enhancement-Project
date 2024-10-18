@@ -66,13 +66,12 @@ export const insertManyMentors = async (request: any, response: any) => {
         });
       }
       
-      idNumber += 1
  
       const createdMentors = await prisma.mentor.upsert({
-        where: { mentor_id: (idNumber) },
+        where: { mentor_id: (mentor.mentor_id) },
         update: {},
         create: {
-          mentor_id: idNumber,
+          mentor_id: mentor.mentor_id,
           name: mentor.name,
           email_address: mentor.email_address,
           Program: mentor.program,
