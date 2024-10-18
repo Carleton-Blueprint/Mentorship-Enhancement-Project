@@ -17,23 +17,20 @@ const AvailabilityTable: React.FC<AvailabilityTableProps> = ({ form, availabilit
     '11:30 -\n12:00 PM', '12:00 -\n12:30 PM', '12:30 -\n1:00 PM',
     '1:00 -\n1:30 PM', '1:30 -\n2:00 PM', '2:00 -\n2:30 PM',
     '2:30 -\n3:00 PM', '3:00 -\n3:30 PM', '3:30 -\n4:00 PM'];
-  
 
   useEffect(() => {
-    const rows = daysOfWeek.length;
-    const columns = timeslots.length;
-    setAvailability(Array.from({ length: rows }, () => Array(columns).fill(false)));
-  }, [daysOfWeek.length, timeslots.length, setAvailability]);
+    if (!availability || availability.length === 0) {
+      const rows = daysOfWeek.length;
+      const columns = timeslots.length;
+      setAvailability(Array.from({ length: rows }, () => Array(columns).fill(false)));
+    }
+  }, [daysOfWeek.length, timeslots.length, availability, setAvailability]);
 
   function selectTimeslot(event: React.MouseEvent<HTMLLabelElement, MouseEvent>, rowNum: number, colNum: number): void {
-    const target = event.currentTarget;
-    if (target.classList.contains('selected')) {
-      target.classList.remove('selected');
+    const newAvailability = [...(availability || [])];
+    if (!newAvailability[rowNum]) {
+      newAvailability[rowNum] = [];
     }
-    else {
-      target.classList.add('selected');
-    }
-    const newAvailability = [...availability];
     newAvailability[rowNum][colNum] = !newAvailability[rowNum][colNum];
     setAvailability(newAvailability);
   }
@@ -41,25 +38,28 @@ const AvailabilityTable: React.FC<AvailabilityTableProps> = ({ form, availabilit
   return (
     <>
       <div className={`text-sm font-medium required ${availabilityValid ? "" : "text-red"}`}>Availability</div>
-      <table className="w-full table-fixed mt-2">
-        <tbody>
-          {daysOfWeek.map((day, rowNum) => (
-            <tr key={rowNum}>
-              <td className="select-none text-center font-medium bg-[#D9D9D9]">{day}</td>
-              {timeslots.map((timeslot, colNum) => (
-                <td key={colNum}>
-                  <label
-                    className="timeslot-label select-none"
-                    onClick={(event) => selectTimeslot(event, rowNum, colNum)}
-                  >
-                    {timeslot}
-                  </label>
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {availability && availability.length > 0 ?
+        <table className="w-full table-fixed mt-2">
+          <tbody>
+            {daysOfWeek.map((day, rowNum) => (
+              <tr key={rowNum}>
+                <td className="select-none text-center font-medium bg-[#D9D9D9]">{day}</td>
+                {timeslots.map((timeslot, colNum) => (
+                  <td key={colNum}>
+                    <label
+                      className={`timeslot-label select-none ${availability[rowNum][colNum] ? "selected" : ""}`}
+                      onClick={(event) => selectTimeslot(event, rowNum, colNum)}
+                    >
+                      {timeslot}
+                    </label>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        : ""
+      }
       <div className="text-sm font-medium text-destructive">
         {availabilityValid ? '' : 'Please select at least one timeslot'}
       </div>
