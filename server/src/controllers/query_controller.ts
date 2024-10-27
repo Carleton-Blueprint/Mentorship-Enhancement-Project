@@ -1,38 +1,34 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { writeFile, appendFile } from "fs/promises";
 
 const prisma = new PrismaClient();
 
 export const generateCsv = async (request, response) => {
+  // Match all students with mentors
+  const { matches, unmatchedStudents } = await findMatches();
+  let csvContent = "";
+  let unmatchedCsvContent = "";
 
-   // Match all students with mentors
-   const { matches, unmatchedStudents } = await findMatches();
-   let csvContent = "";
-   let unmatchedCsvContent = "";
+  if (matches.length > 0) {
+    // Convert matches to CSV format
+    csvContent = convertToCsv(matches);
 
-   if (matches.length > 0) {
-     // Convert matches to CSV format
-     csvContent = convertToCsv(matches);
- 
-     // Here you would send the csvContent to the frontend (e.g., through an API response)
-     console.log("CSV Content for Matched:\n", csvContent);
-   } else {
-     console.log('No students were matched with mentors.');
-   }
- 
-   if (unmatchedStudents.length > 0) {
-     // Convert unmatched students to CSV format
-     unmatchedCsvContent = convertUnmatchedToCsv(unmatchedStudents);
- 
-     // Here you would send the unmatchedCsvContent to the frontend (e.g., through an API response)
-     console.log("CSV Content for Unmatched Students:\n", unmatchedCsvContent);
-   } else {
-     console.log('All students were matched with mentors.');
-   }
+    // Send the csvContent to the frontend (e.g., through an API response)
+    console.log("CSV Content for Matched:\n", csvContent);
+  } else {
+    console.log("No students were matched with mentors.");
+  }
 
-  const content = {csvContent, unmatchedCsvContent};
-  // console.log("csvContent", csvContent);
-  // console.log("unmatchedCsvContent", unmatchedCsvContent);
+  if (unmatchedStudents.length > 0) {
+    // Convert unmatched students to CSV format
+    unmatchedCsvContent = convertUnmatchedToCsv(unmatchedStudents);
+
+    // Send the unmatchedCsvContent to the frontend
+    console.log("CSV Content for Unmatched Students:\n", unmatchedCsvContent);
+  } else {
+    console.log("All students were matched with mentors.");
+  }
+
+  const content = { csvContent, unmatchedCsvContent };
   console.log("content", content);
 
   try {
@@ -45,7 +41,7 @@ export const generateCsv = async (request, response) => {
 
 const findMatches = async () => {
   try {
-    // Fetch all students with their courses and availability
+    // Fetch all students with their courses
     const students = await prisma.student.findMany({
       include: {
         StudentCourse: {
@@ -61,9 +57,8 @@ const findMatches = async () => {
 
     // Loop through each student
     for (const student of students) {
-      console.log("student", student)
       const studentCourseIds = student.StudentCourse.map((sc) => sc.course_id);
-      console.log('studentCourseIds', studentCourseIds);
+      console.log("studentCourseIds", studentCourseIds);
 
       // Find all mentors who have taken any of the student's courses
       const mentors = await prisma.mentor.findMany({
@@ -83,7 +78,7 @@ const findMatches = async () => {
         },
       });
 
-      console.log('mentors', mentors.length);
+      console.log("mentors", mentors.length);
 
       // If there are no mentors, mark the student as unmatched
       if (mentors.length === 0) {
@@ -96,62 +91,36 @@ const findMatches = async () => {
         continue;
       }
 
-      // Find the mentor with the most overlapping courses but with fewer pairings
-      let bestMentor = null;
-      let maxOverlap = 0;
-
-      mentors.forEach((mentor) => {
+      // Collect all compatible mentors for the student
+      const compatibleMentors = mentors.map((mentor) => {
         const mentorCourseIds = mentor.MentorCourse.map((mc) => mc.course_id);
         const overlappingCourses = studentCourseIds.filter((courseId) =>
           mentorCourseIds.includes(courseId)
         );
 
-        const overlapCount = overlappingCourses.length;
-
-        // Pick the mentor with the most overlaps and fewer pairings
-        if (
-          (overlapCount > maxOverlap) ||
-          (overlapCount === maxOverlap && mentor.Pairings < bestMentor?.Pairings)
-        ) {
-          bestMentor = mentor;
-          maxOverlap = overlapCount;
-        }
-      });
-
-      if (bestMentor && maxOverlap > 0) {
-        // Record the best match (student to mentor with most overlapping courses and least pairings)
-        const matchedCourses = student.StudentCourse.filter((sc) =>
-          bestMentor.MentorCourse.some((mc) => mc.course_id === sc.course_id)
+        const matchedCourses = mentor.MentorCourse.filter((mc) =>
+          overlappingCourses.includes(mc.course_id)
         );
 
-        matches.push({
-          studentId: student.student_id,
-          studentEmail: student.email,
-          studentFirstName: student.first_name,
-          studentLastName: student.last_name,
-          mentorId: bestMentor.mentor_id,
-          mentorFirstName: bestMentor.name.split(" ")[0], // Assuming first name is first in the full name
-          mentorLastName: bestMentor.name.split(" ")[1], // Assuming last name is second
-          mentorEmail: bestMentor.email_address,
-          courseName: matchedCourses
+        return {
+          mentorId: mentor.mentor_id,
+          mentorFirstName: mentor.name.split(" ")[0],
+          mentorLastName: mentor.name.split(" ")[1] || "",
+          mentorEmail: mentor.email_address,
+          courseNames: matchedCourses
             .map((mc) => mc.course.course_name)
-            .join(", "), // List of matched courses
-        });
+            .join(", "),
+        };
+      });
 
-        // Increment the mentor's pairings
-        await prisma.mentor.update({
-          where: { mentor_id: bestMentor.mentor_id },
-          data: { Pairings: { increment: 1 } }, // Increment the Pairings count
-        });
-      } else {
-        // If no mentor is found, mark the student as unmatched
-        unmatchedStudents.push({
-          studentId: student.student_id,
-          studentEmail: student.email,
-          studentFirstName: student.first_name,
-          studentLastName: student.last_name,
-        });
-      }
+      // Record all compatible mentors for the student
+      matches.push({
+        studentId: student.student_id,
+        studentEmail: student.email,
+        studentFirstName: student.first_name,
+        studentLastName: student.last_name,
+        mentors: compatibleMentors,
+      });
     }
 
     return { matches, unmatchedStudents };
@@ -161,25 +130,32 @@ const findMatches = async () => {
   }
 };
 
-
-
-
 // Function to convert matches to CSV format for frontend
 const convertToCsv = (matches) => {
   const csvData = [];
 
   // Add header row
-  csvData.push(["Student Name", "Student Email", "Mentor Name", "Mentor Email", "Courses in Common"]);
-  
+  csvData.push([
+    "Student Name",
+    "Student Email",
+    "Mentor Name",
+    "Mentor Email",
+    "Courses in Common",
+  ]);
+
   // Iterate over each match and extract the required information
   matches.forEach((match) => {
-    csvData.push([
-      `${match.studentFirstName} ${match.studentLastName}`,  // Student's full name
-      match.studentEmail,                                   // Student's email
-      `${match.mentorFirstName} ${match.mentorLastName}`,    // Mentor's full name
-      match.mentorEmail,                                    // Mentor's email
-      match.courseName,                                     // List of courses in common
-    ]);
+    if (match.mentors && match.mentors.length > 0) {
+      match.mentors.forEach((mentor) => {
+        csvData.push([
+          `${match.studentFirstName} ${match.studentLastName}`, // Student's full name
+          match.studentEmail, // Student's email
+          `${mentor.mentorFirstName} ${mentor.mentorLastName}`, // Mentor's full name
+          mentor.mentorEmail, // Mentor's email
+          mentor.courseNames, // List of matched courses
+        ]);
+      });
+    }
   });
 
   // Convert array of arrays to CSV string
@@ -192,17 +168,18 @@ const convertUnmatchedToCsv = (unmatchedStudents) => {
   const csvData = [];
 
   // Add header row
-  csvData.push(["Student First Name", "Student Last Name", "Student Email", "Mentor First Name", "Mentor Last Name", "Mentor Email"]);
-  
-  // Iterate over each unmatched student and generate empty mentor info
+  csvData.push([
+    "Student First Name",
+    "Student Last Name",
+    "Student Email",
+  ]);
+
+  // Iterate over each unmatched student
   unmatchedStudents.forEach((student) => {
     csvData.push([
-      student.studentFirstName,  // Student's first name
-      student.studentLastName,   // Student's last name
-      student.studentEmail,      // Student's email
-      "",                        // No mentor first name (unmatched)
-      "",                        // No mentor last name (unmatched)
-      ""                         // No mentor email (unmatched)
+      student.studentFirstName, // Student's first name
+      student.studentLastName, // Student's last name
+      student.studentEmail, // Student's email
     ]);
   });
 
