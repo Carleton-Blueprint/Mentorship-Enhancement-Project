@@ -6,9 +6,10 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "dev": "nodemon index.ts",
-    "build": "tsc && node dist/index.js",
+    "build": "tsc && node dist/index.js && prisma generate",
     "lint": "eslint . --ext .ts",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
