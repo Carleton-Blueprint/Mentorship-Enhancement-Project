@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node dist/index.js",
+    "start": "npx prisma migrate dev && tsc && node dist/index.js",
     "dev": "nodemon index.ts",
     "build": "tsc && prisma generate && node dist/index.js",
     "lint": "eslint . --ext .ts",
     "test": "jest",
-    "postinstall": "echo 'Running prisma generate' && prisma generate"
+    "postinstall": "echo 'Running prisma generate' && prisma generate --schema=./prisma/schema.prisma"
 
   },
   "keywords": [],
