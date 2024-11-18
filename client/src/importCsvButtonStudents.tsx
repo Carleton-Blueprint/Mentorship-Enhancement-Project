@@ -64,23 +64,27 @@ export const CsvButtonStudents = () => {
     setFileName(event.target.files[0].name);
   };
 
-  const csvParse = (e: any) => {
+  const csvParse = (e: any): Promise<Student[]> => {
     e.preventDefault();
 
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        complete: (results) => {
-          console.log("results", results.data);
-          const toSend = mapToFields(results.data as ParsedData[]);
-          console.log("toSend", toSend);
-          setData(toSend);
-        },
-        error: (error) => {
-          console.error("Errors parsing CSV:", error);
-        },
-      });
-    }
+    return new Promise((resolve, reject) => {
+      if (file) {
+        Papa.parse(file, {
+          header: true,
+          complete: (results) => {
+            const toSend = mapToFields(results.data as ParsedData[]);
+            setData(toSend);
+            resolve(toSend);
+          },
+          error: (error) => {
+            console.error("Errors parsing CSV:", error);
+            reject(error);
+          },
+        });
+      } else {
+        reject(new Error("No file selected"));
+      }
+    });
   };
 
   function parseTime(timeStr: string): Time {
@@ -151,15 +155,18 @@ export const CsvButtonStudents = () => {
     });
   };
 
-  const handleOnSubmit = (e: any) => {
+  const handleOnSubmit = async (e: any) => {
     e.preventDefault();
-    csvParse(e);
-    if (data) {
-      sendStudentData(data);
+    try {
+      const parsedData = await csvParse(e);
+      await sendStudentData(parsedData);
+    } catch (error) {
+      console.error("Error processing CSV:", error);
     }
   };
 
   const sendStudentData = async (csv: Student[]) => {
+    console.log("csv", csv)
     try {
       await axios.post(
         `${serverUrl}/students/insertStudents`,
