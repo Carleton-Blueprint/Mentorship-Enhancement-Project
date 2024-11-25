@@ -1,7 +1,5 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import prisma from '../prismaClient';
 import { writeFile, appendFile } from "fs/promises";
-
-const prisma = new PrismaClient();
 
 export const generateCsv = async (request, response) => {
   const matches = await findMatches();

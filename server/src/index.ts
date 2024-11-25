@@ -1,34 +1,38 @@
-import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
-import { studentRouter } from "./routes/studentRoutes.js";
-import { mentorRouter } from "./routes/mentorRoutes.js";
-import {dateRouter} from "./routes/dateRoutes.js";
-import {courseRouter} from "./routes/courseRoutes.js"
-import {queryRouter} from "./routes/queryRoutes.js"
-import {authRouter} from "./routes/authRoutes.js"
+import { app } from "./app";
+import { exec } from 'child_process';
+import prisma from './prismaClient';
 
-const app = express();
 dotenv.config();
 const port = process.env.PORT || 5000;
 
-console.log("entering server");
-// Middleware for parsing request body
-app.use(
-  express.json(),
-  //   cookieParser(),
-  cors({
-    origin: [process.env.CLIENT_URL || "http://localhost:3000"],
-    credentials: true,
-  })
-);
-app.use("/students", studentRouter);
-app.use("/mentors", mentorRouter);
-app.use("/date", dateRouter);
-app.use("/course", courseRouter);
-app.use("/query", queryRouter);
-app.use("/auth", authRouter);
+async function startServer() {
+  try {
+    // Run migrations
+    exec('npx prisma migrate deploy', (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error running migrations: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.error(`Migration stderr: ${stderr}`);
+        return;
+      }
+      console.log(`Migration stdout: ${stdout}`);
+    });
 
-app.listen(port, () => {
-  console.log(`App is listening to port: ${port}`);
-});
+    // Start your server here
+    console.log('Server is starting...');
+    app.listen(port, () =>
+      console.log(`Server running on port ${port}`
+    ));
+  } catch (error) {
+    console.error('Error starting server:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+startServer();
+
+module.exports = app
