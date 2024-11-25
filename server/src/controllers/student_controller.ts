@@ -64,7 +64,7 @@ const callCreate = async (students: any) => {
   for (const student of students) {
     console.log("student", student);
     for (const course of student.courses) {
-      console.log("course", course);
+      // console.log("course", course);
       await prisma.course.upsert({
         where: { course_code: course },
         create: {
@@ -77,7 +77,7 @@ const callCreate = async (students: any) => {
 
     // Insert availabilities
     for (const avail of student.availability) {
-      console.log("avail", avail);
+      // console.log("avail", avail);
       for (const time of avail.time_ranges) {
         await prisma.availability.upsert({
           where: {
@@ -97,6 +97,7 @@ const callCreate = async (students: any) => {
       }
     }
 
+    console.log("student.courses", student.courses);
     // Insert student and link courses and availabilities
     const createdStudent = await prisma.student.upsert({
       where: { student_id: student.student_id },
@@ -132,6 +133,7 @@ const callCreate = async (students: any) => {
         },
       },
     });
+    console.log("createdStudent YYYYYYYYYYYYY", createdStudent);
   }
 };
 // Function to perform custom validation

@@ -72,9 +72,9 @@ function validateMentors(mentors) {
 }
 const callCreate = async (mentors) => {
     for (const mentor of mentors) {
-        console.log("mentor", mentor);
+        console.log("mentor XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", mentor);
         for (const course of mentor.courses) {
-            console.log("course", course);
+            // console.log("course", course);
             await prismaClient_1.default.course.upsert({
                 where: { course_code: course },
                 create: {
@@ -85,6 +85,7 @@ const callCreate = async (mentors) => {
             });
         }
         idNumber += 1;
+        console.log("mentor.courses", mentor.courses);
         const createdMentors = await prismaClient_1.default.mentor.upsert({
             where: { mentor_id: (idNumber) },
             update: {},

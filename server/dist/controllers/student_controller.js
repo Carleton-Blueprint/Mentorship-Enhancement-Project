@@ -57,7 +57,7 @@ const callCreate = async (students) => {
     for (const student of students) {
         console.log("student", student);
         for (const course of student.courses) {
-            console.log("course", course);
+            // console.log("course", course);
             await prismaClient_1.default.course.upsert({
                 where: { course_code: course },
                 create: {
@@ -69,7 +69,7 @@ const callCreate = async (students) => {
         }
         // Insert availabilities
         for (const avail of student.availability) {
-            console.log("avail", avail);
+            // console.log("avail", avail);
             for (const time of avail.time_ranges) {
                 await prismaClient_1.default.availability.upsert({
                     where: {
@@ -88,6 +88,7 @@ const callCreate = async (students) => {
                 });
             }
         }
+        console.log("student.courses", student.courses);
         // Insert student and link courses and availabilities
         const createdStudent = await prismaClient_1.default.student.upsert({
             where: { student_id: student.student_id },
