@@ -1,9 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertStudent = exports.insertManyStudents = void 0;
-const client_1 = require("@prisma/client");
+const prismaClient_1 = __importDefault(require("../prismaClient"));
 const promises_1 = require("fs/promises");
-const prisma = new client_1.PrismaClient();
 const insertManyStudents = async (request, response) => {
     console.log("entering default controller");
     const students = request.body.data;
@@ -56,7 +58,7 @@ const callCreate = async (students) => {
         console.log("student", student);
         for (const course of student.courses) {
             console.log("course", course);
-            await prisma.course.upsert({
+            await prismaClient_1.default.course.upsert({
                 where: { course_code: course },
                 create: {
                     course_code: course,
@@ -69,7 +71,7 @@ const callCreate = async (students) => {
         for (const avail of student.availability) {
             console.log("avail", avail);
             for (const time of avail.time_ranges) {
-                await prisma.availability.upsert({
+                await prismaClient_1.default.availability.upsert({
                     where: {
                         unique_avail: {
                             day: avail.day,
@@ -87,7 +89,7 @@ const callCreate = async (students) => {
             }
         }
         // Insert student and link courses and availabilities
-        const createdStudent = await prisma.student.upsert({
+        const createdStudent = await prismaClient_1.default.student.upsert({
             where: { student_id: student.student_id },
             update: {},
             create: {
@@ -172,7 +174,7 @@ const createStudent = async (student) => {
     console.log(`studentJSON: ${JSON.stringify(student)}`);
     // adds courses to database
     for (const course of student["StudentCourse"]) {
-        await prisma.course.upsert({
+        await prismaClient_1.default.course.upsert({
             where: { course_code: course },
             create: {
                 course_code: course,
@@ -184,7 +186,7 @@ const createStudent = async (student) => {
     // add selected availabilities to database
     for (let time of avail) {
         // saves date object in UTC. make sure to convert to EST when retrieving data ( -5 hours)
-        await prisma.availability.upsert({
+        await prismaClient_1.default.availability.upsert({
             where: {
                 unique_avail: {
                     day: time.day,
@@ -200,7 +202,7 @@ const createStudent = async (student) => {
             },
         });
     }
-    const createdStudent = await prisma.student.upsert({
+    const createdStudent = await prismaClient_1.default.student.upsert({
         where: { student_id: student["student_id"] },
         update: {},
         create: {

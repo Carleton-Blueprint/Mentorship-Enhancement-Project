@@ -1,8 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateMentorByID = exports.insertManyMentors = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prismaClient_1 = __importDefault(require("../prismaClient"));
 let idNumber = 0;
 const insertManyMentors = async (request, response) => {
     const mentors = request.body.data;
@@ -73,7 +75,7 @@ const callCreate = async (mentors) => {
         console.log("mentor", mentor);
         for (const course of mentor.courses) {
             console.log("course", course);
-            await prisma.course.upsert({
+            await prismaClient_1.default.course.upsert({
                 where: { course_code: course },
                 create: {
                     course_code: course,
@@ -83,7 +85,7 @@ const callCreate = async (mentors) => {
             });
         }
         idNumber += 1;
-        const createdMentors = await prisma.mentor.upsert({
+        const createdMentors = await prismaClient_1.default.mentor.upsert({
             where: { mentor_id: (idNumber) },
             update: {},
             create: {
@@ -109,7 +111,7 @@ const callEditByID = async (mentor) => {
     if (mentor.courses) {
         for (const course of mentor.courses) {
             console.log("course", course);
-            await prisma.course.upsert({
+            await prismaClient_1.default.course.upsert({
                 where: { course_code: course },
                 create: {
                     course_code: course,
@@ -119,7 +121,7 @@ const callEditByID = async (mentor) => {
             });
         }
     }
-    const updatedMentors = await prisma.mentor.upsert({
+    const updatedMentors = await prismaClient_1.default.mentor.upsert({
         where: { mentor_id: (mentor.id) },
         update: {},
         create: {

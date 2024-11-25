@@ -1,8 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateCsv = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prismaClient_1 = __importDefault(require("../prismaClient"));
 const generateCsv = async (request, response) => {
     // Match all students with mentors
     const { matches, unmatchedStudents } = await findMatches();
@@ -42,7 +44,7 @@ exports.generateCsv = generateCsv;
 const findMatches = async () => {
     try {
         // Fetch all students with their courses and availability
-        const students = await prisma.student.findMany({
+        const students = await prismaClient_1.default.student.findMany({
             include: {
                 StudentCourse: {
                     include: {
@@ -59,7 +61,7 @@ const findMatches = async () => {
             const studentCourseIds = student.StudentCourse.map((sc) => sc.course_id);
             console.log('studentCourseIds', studentCourseIds);
             // Find all mentors who have taken any of the student's courses
-            const mentors = await prisma.mentor.findMany({
+            const mentors = await prismaClient_1.default.mentor.findMany({
                 where: {
                     MentorCourse: {
                         some: {
@@ -117,7 +119,7 @@ const findMatches = async () => {
                         .join(", "), // List of matched courses
                 });
                 // Increment the mentor's pairings
-                await prisma.mentor.update({
+                await prismaClient_1.default.mentor.update({
                     where: { mentor_id: bestMentor.mentor_id },
                     data: { Pairings: { increment: 1 } }, // Increment the Pairings count
                 });

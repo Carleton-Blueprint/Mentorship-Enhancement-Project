@@ -72,7 +72,9 @@ export const CsvButtonStudents = () => {
         Papa.parse(file, {
           header: true,
           complete: (results) => {
-            const toSend = mapToFields(results.data as ParsedData[]);
+            // Filter out entries with empty ID
+            const filteredData = (results.data as ParsedData[]).filter((entry) => entry["ID"] !== "");
+            const toSend = mapToFields(filteredData as ParsedData[]);
             setData(toSend);
             resolve(toSend);
           },
@@ -121,7 +123,7 @@ export const CsvButtonStudents = () => {
       ];
       
       const availability: Availability[] = daysOfWeek
-        .map((day) => {
+      .map((day) => {
           const times = s[day]?.split(";").filter(Boolean) || [];
           const parsedTimes: TimeRange[] = [];
           times.forEach((time) => {
@@ -134,13 +136,13 @@ export const CsvButtonStudents = () => {
         })
         .filter((day) => day.time_ranges.length > 0);
         
-        const courses = s[
-          "Please list any courses in which you would like to improve your grades."
-        ]
-        .split(", ")
-        .map((course: string) => course.trim());
-        
       console.log("s", s);
+      const courses = s[
+        "Please list any courses in which you would like to improve your grades."
+      ]
+      .split(", ")
+      .map((course: string) => course.trim());
+        
       const student_id = parseInt(s["Student Number"]);
       let year_level = parseInt(s["What is your year level?"]);
 
