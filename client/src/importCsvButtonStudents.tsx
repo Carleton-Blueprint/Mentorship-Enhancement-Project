@@ -136,13 +136,13 @@ export const CsvButtonStudents = () => {
         })
         .filter((day) => day.time_ranges.length > 0);
         
-      console.log("s", s);
-      const courses = s[
-        "Please list any courses in which you would like to improve your grades."
-      ]
-      .split(", ")
-      .map((course: string) => course.trim());
+        const courses = s[
+          "Please list any courses in which you would like to improve your grades."
+        ]
+        .split(", ")
+        .map((course: string) => course.trim());
         
+      console.log("s", s);
       const student_id = parseInt(s["Student Number"]);
       let year_level = parseInt(s["What is your year level?"]);
 
