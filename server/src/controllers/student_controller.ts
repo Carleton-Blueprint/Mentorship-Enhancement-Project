@@ -1,8 +1,6 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-import yaml from "js-yaml";
+import { Prisma } from "@prisma/client";
+import prisma from '../prismaClient';
 import { writeFile, appendFile } from "fs/promises";
-
-const prisma = new PrismaClient();
 
 interface TimeRange {
   startTime: Date;

@@ -1,6 +1,6 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import prisma from '../prismaClient';
 
-const prisma = new PrismaClient();
 let idNumber = 0;
 
 export const insertManyMentors = async (request: any, response: any) => {
