@@ -30,8 +30,8 @@ function convertTimeStringToDate(timeStr: string): Date {
   let hour = parseInt(hours);
   if (period.toLowerCase() === 'pm' && hour !== 12) { hour += 12; }
   if (period.toLowerCase() === 'am' && hour === 12) { hour = 0; }
-  // Set the date to a fixed value (e.g., 2024-02-01) for consistent parsing
-  const date = new Date(2024, 1, 1);
+  // Set the date to a fixed value (e.g., 2024-10-01) for consistent parsing
+  const date = new Date("2024-10-01");
   date.setHours(hour, parseInt(minutes), 0, 0);
   return date;
 }
@@ -138,80 +138,92 @@ const callCreate = async (mentors: MentorData[]) => {
         });
       }
     }
+    console.log("Processing mentor:", mentor.mentor_id);
 
-    console.log("mentor.courses", mentor.courses);
-    console.log("mentor.availability", mentor.availability);
-
-    // Create mentor with relationships
+    // Create or update mentor
     const createdMentor = await prisma.mentor.upsert({
-      where: { mentor_id: idNumber },
+      where: { 
+        mentor_id: mentor.mentor_id 
+      },
       update: {
-        name: mentor.name,
-        email_address: mentor.email_address,
-        Program: mentor.program,
-        year: mentor.year,
-        MentorCourse: {
-          deleteMany: {},
-          create: mentor.courses.map(course => ({
-            course: { connect: { course_code: course } },
-          })),
-        },
-        MentorAvailability: {
-          deleteMany: {},
-          create: Object.entries(mentor.availability).flatMap(([day, slots]) =>
+        // Update only provided fields, preserve existing ones
+        ...(mentor.name && { name: mentor.name }),
+        ...(mentor.email_address && { email_address: mentor.email_address }),
+        ...(mentor.program && { Program: mentor.program }),
+        ...(mentor.year && { year: mentor.year }),
+        
+        // If courses provided, update courses
+        ...(mentor.courses?.length > 0 && {
+          MentorCourse: {
+            deleteMany: {},
+            create: mentor.courses.map(course => ({
+              course: { connect: { course_code: course } },
+            })),
+          }
+        }),
+
+        // If availability provided, update availability
+        ...(Object.keys(mentor.availability || {}).length > 0 && {
+          MentorAvailability: {
+            deleteMany: {},
+            create: Object.entries(mentor.availability).flatMap(([day, slots]) =>
               slots.map(slot => {
-              const cleanedSlot = cleanTimeSlot(slot);
-              const [startTime, endTime] = cleanedSlot.split(' to ');
-              return {
-                availability: {
-                  connect: {
-                    unique_avail: {
-                      day,
-                      start_time: convertTimeStringToDate(startTime),
-                      end_time: convertTimeStringToDate(endTime),
+                const cleanedSlot = cleanTimeSlot(slot);
+                const [startTime, endTime] = cleanedSlot.split(' to ');
+                return {
+                  availability: {
+                    connect: {
+                      unique_avail: {
+                        day,
+                        start_time: convertTimeStringToDate(startTime),
+                        end_time: convertTimeStringToDate(endTime),
+                      },
                     },
                   },
-                },
-              };
-            })
-          ),
-        },
+                };
+              })
+            ),
+          }
+        }),
       },
       create: {
-        mentor_id: idNumber,
+        mentor_id: mentor.mentor_id,
         name: mentor.name,
         email_address: mentor.email_address,
         Program: mentor.program,
         year: mentor.year,
-        MentorCourse: {
-          create: mentor.courses.map(course => ({
-            course: { connect: { course_code: course } },
-          })),
-        },
-        MentorAvailability: {
-          create: Object.entries(mentor.availability).flatMap(([day, slots]) =>
+        ...(mentor.courses?.length > 0 && {
+          MentorCourse: {
+            create: mentor.courses.map(course => ({
+              course: { connect: { course_code: course } },
+            })),
+          }
+        }),
+        ...(Object.keys(mentor.availability || {}).length > 0 && {
+          MentorAvailability: {
+            create: Object.entries(mentor.availability).flatMap(([day, slots]) =>
               slots.map(slot => {
-              const cleanedSlot = cleanTimeSlot(slot);
-              const [startTime, endTime] = cleanedSlot.split(' to ');
-              return {
-                availability: {
-                  connect: {
-                    unique_avail: {
-                      day,
-                      start_time: convertTimeStringToDate(startTime),
-                      end_time: convertTimeStringToDate(endTime),
+                const cleanedSlot = cleanTimeSlot(slot);
+                const [startTime, endTime] = cleanedSlot.split(' to ');
+                return {
+                  availability: {
+                    connect: {
+                      unique_avail: {
+                        day,
+                        start_time: convertTimeStringToDate(startTime),
+                        end_time: convertTimeStringToDate(endTime),
+                      },
                     },
                   },
-                },
-              };
-            })
-          ),
-        },
+                };
+              })
+            ),
+          }
+        }),
       },
     });
 
-    idNumber += 1;
-    console.log("Created mentor:", createdMentor);
+    console.log("Mentor processed:", createdMentor.mentor_id);
   }
 };
 

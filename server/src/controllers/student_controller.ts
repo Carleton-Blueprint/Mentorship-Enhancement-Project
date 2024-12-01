@@ -130,7 +130,7 @@ function validateStudents(students: Prisma.StudentCreateInput[]) {
 }
 
 function convertToDate(time: Time): Date {
-  const date = new Date(); // Get the current date
+  const date = new Date("2024-10-01"); // Get arbitrary date
   date.setHours(time.hours, time.minutes, 0, 0); // Set the hours, minutes, seconds, and milliseconds
   return date;
 }
@@ -261,14 +261,14 @@ function convertAvailabilityToPrismaData(availabilityArray: boolean[][]) {
       timeslot++
     ) {
       if (availabilityArray[day][timeslot]) {
-        const startTime = new Date();
+        const startTime = new Date("2024-10-01");
         startTime.setHours(
           itoSlot[timeslot]["hours"],
           itoSlot[timeslot]["minutes"],
           0,
           0
         );
-        const endTime = new Date();
+        const endTime = new Date("2024-10-01");
         endTime.setHours(
           itoSlot[timeslot]["hours"],
           itoSlot[timeslot]["minutes"] + 30,
