@@ -10,6 +10,8 @@ const generateCsv = async (request, response) => {
     const { matches, unmatchedStudents } = await findMatches();
     console.log("matches.slice(0,5)", matches.slice(0, 5));
     console.log("unmatchedStudents.slice(0,5)", unmatchedStudents.slice(0, 5));
+    console.log("matches.length", matches.length);
+    console.log("unmatchedStudents.length", unmatchedStudents.length);
     let csvContent = "";
     let unmatchedCsvContent = "";
     if (matches.length > 0) {
@@ -25,7 +27,7 @@ const generateCsv = async (request, response) => {
         console.log('All students were matched with mentors.');
     }
     const content = { csvContent, unmatchedCsvContent };
-    console.log("content", content);
+    // console.log("content", content);
     try {
         return response.status(200).json(content);
     }
@@ -37,22 +39,20 @@ const generateCsv = async (request, response) => {
 exports.generateCsv = generateCsv;
 const findMatches = async () => {
     try {
+        // Reset all mentor pairings at start
+        await prismaClient_1.default.mentor.updateMany({
+            data: { Pairings: 0 }
+        });
         const students = await prismaClient_1.default.student.findMany({
             include: {
-                StudentCourse: {
-                    include: {
-                        course: true,
-                    },
-                },
-                StudentAvailability: {
-                    include: {
-                        availability: true,
-                    },
-                },
-            },
+                StudentCourse: { include: { course: true } },
+                StudentAvailability: { include: { availability: true } }
+            }
         });
         let matches = [];
         let unmatchedStudents = [];
+        let mentorPairings = new Map(); // Track pairings per mentor
+        // Process all students first
         for (const student of students) {
             const studentCourseIds = student.StudentCourse.map(sc => sc.course_id);
             const studentAvailabilities = student.StudentAvailability.map(sa => ({
@@ -79,16 +79,8 @@ const findMatches = async () => {
                     },
                 },
                 include: {
-                    MentorCourse: {
-                        include: {
-                            course: true,
-                        },
-                    },
-                    MentorAvailability: {
-                        include: {
-                            availability: true,
-                        },
-                    },
+                    MentorCourse: { include: { course: true, }, },
+                    MentorAvailability: { include: { availability: true, }, },
                 },
             });
             if (mentors.length === 0) {
@@ -147,10 +139,8 @@ const findMatches = async () => {
                         endTime: slot.end_time,
                     })),
                 });
-                await prismaClient_1.default.mentor.update({
-                    where: { mentor_id: bestMentor.mentor_id },
-                    data: { Pairings: { increment: 1 } },
-                });
+                // Track pairing instead of updating
+                mentorPairings.set(bestMentor.mentor_id, (mentorPairings.get(bestMentor.mentor_id) || 0) + 1);
             }
             else {
                 unmatchedStudents.push({
@@ -161,6 +151,11 @@ const findMatches = async () => {
                 });
             }
         }
+        // Update all mentor pairings in a single transaction
+        await prismaClient_1.default.$transaction(Array.from(mentorPairings.entries()).map(([mentorId, count]) => prismaClient_1.default.mentor.update({
+            where: { mentor_id: mentorId },
+            data: { Pairings: count }
+        })));
         return { matches, unmatchedStudents };
     }
     catch (error) {
