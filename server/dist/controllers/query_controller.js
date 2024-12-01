@@ -8,6 +8,8 @@ const prismaClient_1 = __importDefault(require("../prismaClient"));
 const generateCsv = async (request, response) => {
     // Match all students with mentors
     const { matches, unmatchedStudents } = await findMatches();
+    console.log("matches", matches);
+    console.log("unmatchedStudents", unmatchedStudents);
     let csvContent = "";
     let unmatchedCsvContent = "";
     if (matches.length > 0) {
@@ -48,7 +50,12 @@ const findMatches = async () => {
             include: {
                 StudentCourse: {
                     include: {
-                        course: true, // Include course details
+                        course: true,
+                    },
+                },
+                StudentAvailability: {
+                    include: {
+                        availability: true,
                     },
                 },
             },
@@ -57,22 +64,30 @@ const findMatches = async () => {
         let unmatchedStudents = [];
         // Loop through each student
         for (const student of students) {
-            console.log("student", student);
             const studentCourseIds = student.StudentCourse.map((sc) => sc.course_id);
-            console.log('studentCourseIds', studentCourseIds);
-            // Find all mentors who have taken any of the student's courses
+            const studentAvailabilities = student.StudentAvailability.map(sa => ({
+                day: sa.availability.day,
+                start_time: sa.availability.start_time,
+                end_time: sa.availability.end_time,
+            }));
+            // Find mentors with matching courses
             const mentors = await prismaClient_1.default.mentor.findMany({
                 where: {
                     MentorCourse: {
                         some: {
-                            course_id: { in: studentCourseIds }, // At least one matching course
+                            course_id: { in: studentCourseIds },
                         },
                     },
                 },
                 include: {
                     MentorCourse: {
                         include: {
-                            course: true, // Include course details
+                            course: true,
+                        },
+                    },
+                    MentorAvailability: {
+                        include: {
+                            availability: true,
                         },
                     },
                 },
@@ -91,19 +106,29 @@ const findMatches = async () => {
             // Find the mentor with the most overlapping courses but with fewer pairings
             let bestMentor = null;
             let maxOverlap = 0;
+            let matchedTimeslots = [];
             mentors.forEach((mentor) => {
                 const mentorCourseIds = mentor.MentorCourse.map((mc) => mc.course_id);
                 const overlappingCourses = studentCourseIds.filter((courseId) => mentorCourseIds.includes(courseId));
+                const mentorAvailabilities = mentor.MentorAvailability.map(ma => ({
+                    day: ma.availability.day,
+                    start_time: ma.availability.start_time,
+                    end_time: ma.availability.end_time,
+                }));
+                // Find overlapping timeslots
+                const overlappingTimeslots = studentAvailabilities.filter(sTime => mentorAvailabilities.some(mTime => mTime.day === sTime.day &&
+                    mTime.start_time.getTime() === sTime.start_time.getTime() &&
+                    mTime.end_time.getTime() === sTime.end_time.getTime()));
                 const overlapCount = overlappingCourses.length;
-                // Pick the mentor with the most overlaps and fewer pairings
-                if ((overlapCount > maxOverlap) ||
-                    (overlapCount === maxOverlap && mentor.Pairings < bestMentor?.Pairings)) {
+                const hasTimeOverlap = overlappingTimeslots.length > 0;
+                if (hasTimeOverlap && ((overlapCount > maxOverlap) ||
+                    (overlapCount === maxOverlap && mentor.Pairings < bestMentor?.Pairings))) {
                     bestMentor = mentor;
                     maxOverlap = overlapCount;
+                    matchedTimeslots = overlappingTimeslots;
                 }
             });
-            if (bestMentor && maxOverlap > 0) {
-                // Record the best match (student to mentor with most overlapping courses and least pairings)
+            if (bestMentor && maxOverlap > 0 && matchedTimeslots.length > 0) {
                 const matchedCourses = student.StudentCourse.filter((sc) => bestMentor.MentorCourse.some((mc) => mc.course_id === sc.course_id));
                 matches.push({
                     studentId: student.student_id,
@@ -111,14 +136,18 @@ const findMatches = async () => {
                     studentFirstName: student.first_name,
                     studentLastName: student.last_name,
                     mentorId: bestMentor.mentor_id,
-                    mentorFirstName: bestMentor.name.split(" ")[0], // Assuming first name is first in the full name
-                    mentorLastName: bestMentor.name.split(" ")[1], // Assuming last name is second
+                    mentorFirstName: bestMentor.name.split(" ")[0],
+                    mentorLastName: bestMentor.name.split(" ")[1],
                     mentorEmail: bestMentor.email_address,
                     courseName: matchedCourses
                         .map((mc) => mc.course.course_name)
-                        .join(", "), // List of matched courses
+                        .join(", "),
+                    matchedTimeslots: matchedTimeslots.map(slot => ({
+                        day: slot.day,
+                        startTime: slot.start_time,
+                        endTime: slot.end_time,
+                    })),
                 });
-                // Increment the mentor's pairings
                 await prismaClient_1.default.mentor.update({
                     where: { mentor_id: bestMentor.mentor_id },
                     data: { Pairings: { increment: 1 } }, // Increment the Pairings count
@@ -144,21 +173,40 @@ const findMatches = async () => {
 // Function to convert matches to CSV format for frontend
 const convertToCsv = (matches) => {
     const csvData = [];
-    // Add header row
-    csvData.push(["Student Name", "Student Email", "Mentor Name", "Mentor Email", "Courses in Common"]);
-    // Iterate over each match and extract the required information
+    // Add header row with new timeslot columns
+    csvData.push([
+        "Student Name",
+        "Student Email",
+        "Mentor Name",
+        "Mentor Email",
+        "Courses in Common",
+        "Meeting Times"
+    ]);
+    // Iterate over each match
     matches.forEach((match) => {
+        // Format timeslots as readable strings
+        const formattedTimeslots = match.matchedTimeslots.map(slot => `${slot.day} ${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`).join("; ");
         csvData.push([
-            `${match.studentFirstName} ${match.studentLastName}`, // Student's full name
-            match.studentEmail, // Student's email
-            `${match.mentorFirstName} ${match.mentorLastName}`, // Mentor's full name
-            match.mentorEmail, // Mentor's email
-            match.courseName, // List of courses in common
+            `${match.studentFirstName} ${match.studentLastName}`,
+            match.studentEmail,
+            `${match.mentorFirstName} ${match.mentorLastName}`,
+            match.mentorEmail,
+            match.courseName,
+            formattedTimeslots
         ]);
     });
     // Convert array of arrays to CSV string
     const csvContent = csvData.map((row) => row.join(",")).join("\n");
     return csvContent;
+};
+// Helper function to format time
+const formatTime = (time) => {
+    const hours = time.getHours();
+    const minutes = time.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHours = hours % 12 || 12;
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    return `${formattedHours}:${formattedMinutes}${ampm}`;
 };
 // Function to convert unmatched students to CSV format
 const convertUnmatchedToCsv = (unmatchedStudents) => {

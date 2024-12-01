@@ -2,11 +2,6 @@ import { Prisma } from "@prisma/client";
 import prisma from '../prismaClient';
 import { writeFile, appendFile } from "fs/promises";
 
-interface TimeRange {
-  startTime: Date;
-  endTime: Date;
-}
-
 interface Time {
   hours: number;
   minutes: number;
@@ -36,30 +31,6 @@ export const insertManyStudents = async (request: any, response: any) => {
   }
 };
 
-function parseTimeRange(timeRangeStr: string): TimeRange {
-  const [startTimeStr, endTimeStr] = timeRangeStr
-    .split(" to ")
-    .map((time) => time.trim());
-
-  const parseTime = (timeStr: string): Date => {
-    const [time, modifier] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    if (modifier === "PM" && hours !== 12) {
-      hours += 12;
-    } else if (modifier === "AM" && hours === 12) {
-      hours = 0;
-    }
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
-  };
-
-  return {
-    startTime: parseTime(startTimeStr),
-    endTime: parseTime(endTimeStr),
-  };
-}
-
 const callCreate = async (students: any) => {
   for (const student of students) {
     console.log("student", student);
@@ -77,7 +48,7 @@ const callCreate = async (students: any) => {
 
     // Insert availabilities
     for (const avail of student.availability) {
-      // console.log("avail", avail);
+      console.log("avail", avail);
       for (const time of avail.time_ranges) {
         await prisma.availability.upsert({
           where: {

@@ -31,28 +31,6 @@ const insertManyStudents = async (request, response) => {
     }
 };
 exports.insertManyStudents = insertManyStudents;
-function parseTimeRange(timeRangeStr) {
-    const [startTimeStr, endTimeStr] = timeRangeStr
-        .split(" to ")
-        .map((time) => time.trim());
-    const parseTime = (timeStr) => {
-        const [time, modifier] = timeStr.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
-        if (modifier === "PM" && hours !== 12) {
-            hours += 12;
-        }
-        else if (modifier === "AM" && hours === 12) {
-            hours = 0;
-        }
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date;
-    };
-    return {
-        startTime: parseTime(startTimeStr),
-        endTime: parseTime(endTimeStr),
-    };
-}
 const callCreate = async (students) => {
     for (const student of students) {
         console.log("student", student);
@@ -69,7 +47,7 @@ const callCreate = async (students) => {
         }
         // Insert availabilities
         for (const avail of student.availability) {
-            // console.log("avail", avail);
+            console.log("avail", avail);
             for (const time of avail.time_ranges) {
                 await prismaClient_1.default.availability.upsert({
                     where: {
@@ -122,6 +100,7 @@ const callCreate = async (students) => {
                 },
             },
         });
+        console.log("createdStudent YYYYYYYYYYYYY", createdStudent);
     }
 };
 // Function to perform custom validation

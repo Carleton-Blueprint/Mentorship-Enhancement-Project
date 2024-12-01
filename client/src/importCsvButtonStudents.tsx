@@ -122,27 +122,28 @@ export const CsvButtonStudents = () => {
         "Friday",
       ];
       
-      const availability: Availability[] = daysOfWeek
+      const availability: Availability[] =
+      daysOfWeek
       .map((day) => {
-          const times = s[day]?.split(";").filter(Boolean) || [];
-          const parsedTimes: TimeRange[] = [];
-          times.forEach((time) => {
-            parsedTimes.push(parseTimeRange(time));
-          });
-          return {
-            day,
-            time_ranges: parsedTimes,
-          };
-        })
-        .filter((day) => day.time_ranges.length > 0);
-        
-        const courses = s[
-          "Please list any courses in which you would like to improve your grades."
-        ]
-        .split(", ")
-        .map((course: string) => course.trim());
-        
+        const times = s[day]?.split(";").filter(Boolean) || [];
+        const parsedTimes: TimeRange[] = [];
+        times.forEach((time) => {
+          parsedTimes.push(parseTimeRange(time));
+        });
+        return {
+          day,
+          time_ranges: parsedTimes,
+        };
+      })
+      .filter((day) => day.time_ranges.length > 0);
+      
       console.log("s", s);
+      const courses = s[
+        "Please list any courses in which you would like to improve your grades."
+      ]
+      .split(", ")
+      .map((course: string) => course.trim());
+        
       const student_id = parseInt(s["Student Number"]);
       let year_level = parseInt(s["What is your year level?"]);
 

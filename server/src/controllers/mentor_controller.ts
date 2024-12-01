@@ -3,6 +3,40 @@ import prisma from '../prismaClient';
 
 let idNumber = 0;
 
+interface MentorAvailability {
+  [key: string]: string[]
+}
+
+interface MentorData {
+  mentor_id: number;
+  name: string;
+  email_address: string;
+  program: string;
+  year: string;
+  courses: string[];
+  availability: MentorAvailability;
+}
+
+function cleanTimeSlot(timeSlot: string): string {
+  // Remove _N suffix from timeslots (e.g., "10:00am to 10:30am_1" -> "10:00am to 10:30am")
+  return timeSlot.replace(/_\d+$/, '');
+}
+
+function convertTimeStringToDate(timeStr: string): Date {  
+  const today = new Date();
+  // Parse time (assuming 12-hour format)
+  const [hourMin, period] = timeStr.split(/(?=[ap]m)/i);
+  const [hours, minutes] = hourMin.split(':');
+  // Convert to 24-hour format
+  let hour = parseInt(hours);
+  if (period.toLowerCase() === 'pm' && hour !== 12) { hour += 12; }
+  if (period.toLowerCase() === 'am' && hour === 12) { hour = 0; }
+  // Set the time components
+  const date = new Date(today);
+  date.setHours(hour, parseInt(minutes), 0, 0);
+  return date;
+}
+
 export const insertManyMentors = async (request: any, response: any) => {
   const mentors = request.body.data;
 
@@ -11,7 +45,7 @@ export const insertManyMentors = async (request: any, response: any) => {
     return response.status(400).json({ error: 'Validation error', details: validationErrors });
   }
   try {
-    console.log("Calling create", mentors);
+    console.log("Calling create mentors", mentors);
     const createdMentors: any = callCreate(mentors);
     response
       .status(201)
@@ -71,11 +105,10 @@ function validateMentors(mentors: Prisma.MentorCreateInput[]): string[] {
   return errors;
 }
 
-const callCreate = async (mentors: any) => {
+const callCreate = async (mentors: MentorData[]) => {
   for (const mentor of mentors) {
     console.log("mentor XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", mentor);
     for (const course of mentor.courses) {
-      // console.log("course", course);
       await prisma.course.upsert({
         where: { course_code: course },
         create: {
@@ -85,13 +118,69 @@ const callCreate = async (mentors: any) => {
         update: {},
       });
     }
-    
-    idNumber += 1;
+    for (const day of Object.keys(mentor.availability)) {
+      for (const timeslot of mentor.availability[day]) {
+        const timeRange = cleanTimeSlot(timeslot);
+        const [startTime, endTime] = timeRange.split(' to ');
+        await prisma.availability.upsert({
+          where: {
+            unique_avail: {
+              day: day,
+              start_time: convertTimeStringToDate(startTime),
+              end_time: convertTimeStringToDate(endTime),
+            },
+          },
+          create: {
+            day: day,
+            start_time: convertTimeStringToDate(startTime),
+            end_time: convertTimeStringToDate(endTime),
+          },
+          update: {},
+        });
+      }
+    }
+
+    // // Process availability slots
+    // REUSE MentorAvailability function
 
     console.log("mentor.courses", mentor.courses);
+    console.log("mentor.availability", mentor.availability);
+
+    // Create mentor with relationships
     const createdMentor = await prisma.mentor.upsert({
-      where: { mentor_id: (idNumber) },
-      update: {},
+      where: { mentor_id: idNumber },
+      update: {
+        name: mentor.name,
+        email_address: mentor.email_address,
+        Program: mentor.program,
+        year: mentor.year,
+        MentorCourse: {
+          deleteMany: {},
+          create: mentor.courses.map(course => ({
+            course: { connect: { course_code: course } },
+          })),
+        },
+        MentorAvailability: {
+          deleteMany: {},
+          create: Object.entries(mentor.availability).flatMap(([day, slots]) =>
+              slots.map(slot => {
+              const cleanedSlot = cleanTimeSlot(slot);
+              const [startTime, endTime] = cleanedSlot.split(' to ');
+              return {
+                availability: {
+                  connect: {
+                    unique_avail: {
+                      day,
+                      start_time: convertTimeStringToDate(startTime),
+                      end_time: convertTimeStringToDate(endTime),
+                    },
+                  },
+                },
+              };
+            })
+          ),
+        },
+      },
       create: {
         mentor_id: idNumber,
         name: mentor.name,
@@ -99,13 +188,34 @@ const callCreate = async (mentors: any) => {
         Program: mentor.program,
         year: mentor.year,
         MentorCourse: {
-          create: mentor.courses.map((course) => ({
+          create: mentor.courses.map(course => ({
             course: { connect: { course_code: course } },
           })),
         },
+        MentorAvailability: {
+          create: Object.entries(mentor.availability).flatMap(([day, slots]) =>
+              slots.map(slot => {
+              const cleanedSlot = cleanTimeSlot(slot);
+              const [startTime, endTime] = cleanedSlot.split(' to ');
+              return {
+                availability: {
+                  connect: {
+                    unique_avail: {
+                      day,
+                      start_time: convertTimeStringToDate(startTime),
+                      end_time: convertTimeStringToDate(endTime),
+                    },
+                  },
+                },
+              };
+            })
+          ),
+        },
       },
     });
-    console.log("createdMentor YYYYYYYYYYYYY", createdMentor);
+
+    idNumber += 1;
+    console.log("Created mentor:", createdMentor);
   }
 };
 
@@ -129,6 +239,20 @@ const callEditByID = async (mentor: any) => {
         }
     }
 
+    // probably won't work
+    // const availabilityCreates = [];
+    // for (const [day, slots] of Object.entries(mentor.availability as MentorAvailability)) {
+    //   for (const slot of slots) {
+    //     const cleanedSlot = cleanTimeSlot(slot);
+    //     const [startTime, endTime] = cleanedSlot.split(" to ");
+    //     availabilityCreates.push({
+    //       day: day,
+    //       start_time: startTime,
+    //       end_time: endTime
+    //     });
+    //   }
+    // }
+
     const updatedMentors = await prisma.mentor.upsert({
         where: { mentor_id: (mentor.id) },
         update: {},
@@ -140,9 +264,12 @@ const callEditByID = async (mentor: any) => {
             year: mentor.year,
             MentorCourse: {
                 create: mentor.courses.map((course) => ({
-                course: { connect: { course_code: course } },
+                    course: { connect: { course_code: course } },
                 })),
             },
+            // MentorAvailability: {
+            //     create: availabilityCreates,
+            // },
         },
     });
 };
