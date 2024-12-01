@@ -126,14 +126,6 @@ const callCreate = async (mentors) => {
             }
         }
         console.log("Processing mentor:", mentor.mentor_id);
-        // // Upsert mentor base info first
-        // const existingMentor = await prisma.mentor.findUnique({
-        //   where: { mentor_id: mentor.mentor_id },
-        //   include: {
-        //     MentorCourse: true,
-        //     MentorAvailability: true
-        //   }
-        // });
         // Create or update mentor
         const createdMentor = await prismaClient_1.default.mentor.upsert({
             where: {
