@@ -13,26 +13,18 @@ const generateCsv = async (request, response) => {
     let csvContent = "";
     let unmatchedCsvContent = "";
     if (matches.length > 0) {
-        // Convert matches to CSV format
         csvContent = convertToCsv(matches);
-        // Here you would send the csvContent to the frontend (e.g., through an API response)
-        console.log("CSV Content for Matched:\n", csvContent);
     }
     else {
         console.log('No students were matched with mentors.');
     }
     if (unmatchedStudents.length > 0) {
-        // Convert unmatched students to CSV format
         unmatchedCsvContent = convertUnmatchedToCsv(unmatchedStudents);
-        // Here you would send the unmatchedCsvContent to the frontend (e.g., through an API response)
-        console.log("CSV Content for Unmatched Students:\n", unmatchedCsvContent);
     }
     else {
         console.log('All students were matched with mentors.');
     }
     const content = { csvContent, unmatchedCsvContent };
-    // console.log("csvContent", csvContent);
-    // console.log("unmatchedCsvContent", unmatchedCsvContent);
     console.log("content", content);
     try {
         return response.status(200).json(content);
@@ -62,7 +54,6 @@ const findMatches = async () => {
         });
         let matches = [];
         let unmatchedStudents = [];
-        // Loop through each student
         for (const student of students) {
             const studentCourseIds = student.StudentCourse.map((sc) => sc.course_id);
             const studentAvailabilities = student.StudentAvailability.map(sa => ({
@@ -70,12 +61,22 @@ const findMatches = async () => {
                 start_time: sa.availability.start_time,
                 end_time: sa.availability.end_time,
             }));
+            console.log("studentAvailabilities", studentAvailabilities);
             // Find mentors with matching courses
             const mentors = await prismaClient_1.default.mentor.findMany({
                 where: {
                     MentorCourse: {
                         some: {
                             course_id: { in: studentCourseIds },
+                        },
+                    },
+                    MentorAvailability: {
+                        some: {
+                            availability: {
+                                day: { in: studentAvailabilities.map(sa => sa.day) },
+                                start_time: { in: studentAvailabilities.map(sa => sa.start_time) },
+                                end_time: { in: studentAvailabilities.map(sa => sa.end_time) },
+                            },
                         },
                     },
                 },
@@ -92,7 +93,8 @@ const findMatches = async () => {
                     },
                 },
             });
-            console.log('mentors', mentors.length);
+            console.log('mentors.splice(0, 3)', mentors.splice(0, 3));
+            console.log('mentors.length', mentors.length);
             // If there are no mentors, mark the student as unmatched
             if (mentors.length === 0) {
                 unmatchedStudents.push({

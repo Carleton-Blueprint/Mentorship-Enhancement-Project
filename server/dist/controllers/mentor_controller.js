@@ -126,8 +126,6 @@ const callCreate = async (mentors) => {
                 });
             }
         }
-        // // Process availability slots
-        // REUSE MentorAvailability function
         console.log("mentor.courses", mentor.courses);
         console.log("mentor.availability", mentor.availability);
         // Create mentor with relationships

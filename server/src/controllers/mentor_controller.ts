@@ -23,7 +23,6 @@ function cleanTimeSlot(timeSlot: string): string {
 }
 
 function convertTimeStringToDate(timeStr: string): Date {  
-  const today = new Date();
   // Parse time (assuming 12-hour format)
   const [hourMin, period] = timeStr.split(/(?=[ap]m)/i);
   const [hours, minutes] = hourMin.split(':');
@@ -31,8 +30,8 @@ function convertTimeStringToDate(timeStr: string): Date {
   let hour = parseInt(hours);
   if (period.toLowerCase() === 'pm' && hour !== 12) { hour += 12; }
   if (period.toLowerCase() === 'am' && hour === 12) { hour = 0; }
-  // Set the time components
-  const date = new Date(today);
+  // Set the date to a fixed value (e.g., 2024-02-01) for consistent parsing
+  const date = new Date(2024, 1, 1);
   date.setHours(hour, parseInt(minutes), 0, 0);
   return date;
 }
@@ -139,9 +138,6 @@ const callCreate = async (mentors: MentorData[]) => {
         });
       }
     }
-
-    // // Process availability slots
-    // REUSE MentorAvailability function
 
     console.log("mentor.courses", mentor.courses);
     console.log("mentor.availability", mentor.availability);
