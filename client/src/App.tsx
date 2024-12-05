@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Login } from "./Login";
 import { Home } from "./Home";
 import { Toaster } from "./components/ui/toaster"
+import { FileSpreadsheetIcon } from "lucide-react";
 
 function App() {
   //default should be false
-  const [loggedIn, setLoggedIn] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
   return (
     <div>
       <Toaster />
