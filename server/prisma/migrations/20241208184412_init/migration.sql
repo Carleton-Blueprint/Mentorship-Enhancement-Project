@@ -68,14 +68,14 @@ CREATE TABLE "StudentAvailability" (
 
 -- CreateTable
 CREATE TABLE "MentorCourse" (
-    "mentor_id" INTEGER NOT NULL,
-    "course_id" INTEGER NOT NULL
+    "course_id" INTEGER NOT NULL,
+    "mentor_id" INTEGER NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "StudentCourse" (
-    "student_id" INTEGER NOT NULL,
-    "course_id" INTEGER NOT NULL
+    "course_id" INTEGER NOT NULL,
+    "student_id" INTEGER NOT NULL
 );
 
 -- CreateTable
@@ -106,10 +106,10 @@ CREATE UNIQUE INDEX "MentorAvailability_availability_id_mentor_id_key" ON "Mento
 CREATE UNIQUE INDEX "StudentAvailability_availability_id_student_id_key" ON "StudentAvailability"("availability_id", "student_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "MentorCourse_mentor_id_course_id_key" ON "MentorCourse"("mentor_id", "course_id");
+CREATE UNIQUE INDEX "MentorCourse_course_id_mentor_id_key" ON "MentorCourse"("course_id", "mentor_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StudentCourse_student_id_course_id_key" ON "StudentCourse"("student_id", "course_id");
+CREATE UNIQUE INDEX "StudentCourse_course_id_student_id_key" ON "StudentCourse"("course_id", "student_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

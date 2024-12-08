@@ -26,8 +26,6 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const [Matchedcsv, setMatchedCsv] = useState<string>("");
   const [Unmatchedcsv, setUnmatchedCsv] = useState<string>("");
 
-  // const [studentData, setStudentData] = useState<Student[]>([]);
-  // const [studentSent, setStudentSent] = useState<Boolean>(false);
 
   function plusIconClicked(event: React.MouseEvent<SVGSVGElement, MouseEvent>): void {
     const target = event.currentTarget;
