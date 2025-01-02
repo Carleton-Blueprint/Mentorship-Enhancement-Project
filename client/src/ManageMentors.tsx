@@ -3,7 +3,7 @@ import { CsvButtonMentors } from "./importCsvButtonMentors";
 import AddEntityCard from "./AddEntityCard";
 import EditEntityCard from "./EditEntityCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-
+import { AddTimeslots } from "./AddTimeslots";
 export const ManageMentors = ({ entity, coursesValid, setCoursesValid, availabilityValid, setAvailabilityValid }:
   {
     entity: string,
@@ -25,6 +25,14 @@ export const ManageMentors = ({ entity, coursesValid, setCoursesValid, availabil
             Bulk Add <br />Mentors
           </TabsTrigger>
           <TabsTrigger
+            onClick={() => setCurrentTab("Timeslot")}
+            className={`font-semibold ${currentTab === "Timeslot" ? "bg-[#cdcdcd]" : "bg-light-grey-2"}
+        text-dark-grey hover:bg-dark-grey-2 px-4 py-2 w-24`}
+            value="Timeslot"
+          >
+            Add Mentor <br /> Timeslots
+          </TabsTrigger>
+          <TabsTrigger
             onClick={() => setCurrentTab("New")}
             className={`font-semibold ${currentTab === "New" ? "bg-[#cdcdcd]" : "bg-light-grey-2"}
         text-dark-grey hover:bg-dark-grey-2 px-4 py-2 w-24`}
@@ -44,6 +52,9 @@ export const ManageMentors = ({ entity, coursesValid, setCoursesValid, availabil
         <div className="flex">
           <TabsContent value="Add">
             <CsvButtonMentors />
+          </TabsContent>
+          <TabsContent value="Timeslot">
+            <AddTimeslots />
           </TabsContent>
           <TabsContent value="New">
             <AddEntityCard

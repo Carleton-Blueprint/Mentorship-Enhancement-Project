@@ -1,6 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../prismaClient';
 
 export const addDateRange = async (request: any, response: any) => {
     const data = request.body.data;
