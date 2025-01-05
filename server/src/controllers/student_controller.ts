@@ -13,7 +13,6 @@ export const insertManyStudents = async (request: any, response: any) => {
   console.log('students', students)
   // Write to the file (replaces the file if it exists)
   try {
-    await writeFile("output.txt", JSON.stringify(students));
     console.log("File written successfully");
   } catch (err) {
     console.error("Error writing to file", err);
