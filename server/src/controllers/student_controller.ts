@@ -1,13 +1,6 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-import yaml from "js-yaml";
+import { Prisma } from "@prisma/client";
+import prisma from '../prismaClient';
 import { writeFile, appendFile } from "fs/promises";
-
-const prisma = new PrismaClient();
-
-interface TimeRange {
-  startTime: Date;
-  endTime: Date;
-}
 
 interface Time {
   hours: number;
@@ -38,35 +31,11 @@ export const insertManyStudents = async (request: any, response: any) => {
   }
 };
 
-function parseTimeRange(timeRangeStr: string): TimeRange {
-  const [startTimeStr, endTimeStr] = timeRangeStr
-    .split(" to ")
-    .map((time) => time.trim());
-
-  const parseTime = (timeStr: string): Date => {
-    const [time, modifier] = timeStr.split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
-    if (modifier === "PM" && hours !== 12) {
-      hours += 12;
-    } else if (modifier === "AM" && hours === 12) {
-      hours = 0;
-    }
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
-  };
-
-  return {
-    startTime: parseTime(startTimeStr),
-    endTime: parseTime(endTimeStr),
-  };
-}
-
 const callCreate = async (students: any) => {
   for (const student of students) {
     console.log("student", student);
     for (const course of student.courses) {
-      console.log("course", course);
+      // console.log("course", course);
       await prisma.course.upsert({
         where: { course_code: course },
         create: {
@@ -99,6 +68,7 @@ const callCreate = async (students: any) => {
       }
     }
 
+    console.log("student.courses", student.courses);
     // Insert student and link courses and availabilities
     const createdStudent = await prisma.student.upsert({
       where: { student_id: student.student_id },
@@ -134,6 +104,7 @@ const callCreate = async (students: any) => {
         },
       },
     });
+    console.log("createdStudent YYYYYYYYYYYYY", createdStudent);
   }
 };
 // Function to perform custom validation
@@ -159,7 +130,7 @@ function validateStudents(students: Prisma.StudentCreateInput[]) {
 }
 
 function convertToDate(time: Time): Date {
-  const date = new Date(); // Get the current date
+  const date = new Date("2024-10-01"); // Get arbitrary date
   date.setHours(time.hours, time.minutes, 0, 0); // Set the hours, minutes, seconds, and milliseconds
   return date;
 }
@@ -290,14 +261,14 @@ function convertAvailabilityToPrismaData(availabilityArray: boolean[][]) {
       timeslot++
     ) {
       if (availabilityArray[day][timeslot]) {
-        const startTime = new Date();
+        const startTime = new Date("2024-10-01");
         startTime.setHours(
           itoSlot[timeslot]["hours"],
           itoSlot[timeslot]["minutes"],
           0,
           0
         );
-        const endTime = new Date();
+        const endTime = new Date("2024-10-01");
         endTime.setHours(
           itoSlot[timeslot]["hours"],
           itoSlot[timeslot]["minutes"] + 30,

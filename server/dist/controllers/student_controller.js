@@ -1,9 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertStudent = exports.insertManyStudents = void 0;
-const client_1 = require("@prisma/client");
+const prismaClient_1 = __importDefault(require("../prismaClient"));
 const promises_1 = require("fs/promises");
-const prisma = new client_1.PrismaClient();
 const insertManyStudents = async (request, response) => {
     console.log("entering default controller");
     const students = request.body.data;
@@ -29,34 +31,12 @@ const insertManyStudents = async (request, response) => {
     }
 };
 exports.insertManyStudents = insertManyStudents;
-function parseTimeRange(timeRangeStr) {
-    const [startTimeStr, endTimeStr] = timeRangeStr
-        .split(" to ")
-        .map((time) => time.trim());
-    const parseTime = (timeStr) => {
-        const [time, modifier] = timeStr.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
-        if (modifier === "PM" && hours !== 12) {
-            hours += 12;
-        }
-        else if (modifier === "AM" && hours === 12) {
-            hours = 0;
-        }
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date;
-    };
-    return {
-        startTime: parseTime(startTimeStr),
-        endTime: parseTime(endTimeStr),
-    };
-}
 const callCreate = async (students) => {
     for (const student of students) {
         console.log("student", student);
         for (const course of student.courses) {
-            console.log("course", course);
-            await prisma.course.upsert({
+            // console.log("course", course);
+            await prismaClient_1.default.course.upsert({
                 where: { course_code: course },
                 create: {
                     course_code: course,
@@ -69,7 +49,7 @@ const callCreate = async (students) => {
         for (const avail of student.availability) {
             console.log("avail", avail);
             for (const time of avail.time_ranges) {
-                await prisma.availability.upsert({
+                await prismaClient_1.default.availability.upsert({
                     where: {
                         unique_avail: {
                             day: avail.day,
@@ -86,8 +66,9 @@ const callCreate = async (students) => {
                 });
             }
         }
+        console.log("student.courses", student.courses);
         // Insert student and link courses and availabilities
-        const createdStudent = await prisma.student.upsert({
+        const createdStudent = await prismaClient_1.default.student.upsert({
             where: { student_id: student.student_id },
             update: {},
             create: {
@@ -119,6 +100,7 @@ const callCreate = async (students) => {
                 },
             },
         });
+        console.log("createdStudent YYYYYYYYYYYYY", createdStudent);
     }
 };
 // Function to perform custom validation
@@ -142,7 +124,7 @@ function validateStudents(students) {
     return errors;
 }
 function convertToDate(time) {
-    const date = new Date(); // Get the current date
+    const date = new Date("2024-10-01"); // Get arbitrary date
     date.setHours(time.hours, time.minutes, 0, 0); // Set the hours, minutes, seconds, and milliseconds
     return date;
 }
@@ -172,7 +154,7 @@ const createStudent = async (student) => {
     console.log(`studentJSON: ${JSON.stringify(student)}`);
     // adds courses to database
     for (const course of student["StudentCourse"]) {
-        await prisma.course.upsert({
+        await prismaClient_1.default.course.upsert({
             where: { course_code: course },
             create: {
                 course_code: course,
@@ -184,7 +166,7 @@ const createStudent = async (student) => {
     // add selected availabilities to database
     for (let time of avail) {
         // saves date object in UTC. make sure to convert to EST when retrieving data ( -5 hours)
-        await prisma.availability.upsert({
+        await prismaClient_1.default.availability.upsert({
             where: {
                 unique_avail: {
                     day: time.day,
@@ -200,7 +182,7 @@ const createStudent = async (student) => {
             },
         });
     }
-    const createdStudent = await prisma.student.upsert({
+    const createdStudent = await prismaClient_1.default.student.upsert({
         where: { student_id: student["student_id"] },
         update: {},
         create: {
@@ -261,9 +243,9 @@ function convertAvailabilityToPrismaData(availabilityArray) {
     for (let day = 0; day < availabilityArray.length; day++) {
         for (let timeslot = 0; timeslot < availabilityArray[day].length; timeslot++) {
             if (availabilityArray[day][timeslot]) {
-                const startTime = new Date();
+                const startTime = new Date("2024-10-01");
                 startTime.setHours(itoSlot[timeslot]["hours"], itoSlot[timeslot]["minutes"], 0, 0);
-                const endTime = new Date();
+                const endTime = new Date("2024-10-01");
                 endTime.setHours(itoSlot[timeslot]["hours"], itoSlot[timeslot]["minutes"] + 30, 0, 0);
                 avail.push({
                     day: itoDay[day],

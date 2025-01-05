@@ -77,21 +77,21 @@ model StudentAvailability {
 }
 
 model MentorCourse {
-  mentor_id Int
   course_id Int
+  mentor_id Int
   course    Course @relation(fields: [course_id], references: [id])
   mentor    Mentor @relation(fields: [mentor_id], references: [id])
 
-  @@unique([mentor_id, course_id])
+  @@unique([course_id, mentor_id])
 }
 
 model StudentCourse {
-  student_id Int
   course_id  Int
+  student_id Int
   course     Course  @relation(fields: [course_id], references: [id])
   student    Student @relation(fields: [student_id], references: [id])
 
-  @@unique([student_id, course_id])
+  @@unique([course_id, student_id])
 }
 
 model User {

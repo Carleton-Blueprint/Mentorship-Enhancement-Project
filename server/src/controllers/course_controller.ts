@@ -1,7 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-
-const prisma = new PrismaClient();
-let idNumber = 0;
+import prisma from '../prismaClient';
 
 export const addCourse = async (request: any, response: any) => {
   const data = request.body.data;
@@ -11,7 +8,7 @@ export const addCourse = async (request: any, response: any) => {
   //   return response.status(400).json({ error: 'Validation error', details: validationErrors });
   // }
   try {
-    const createdCourse: any = callCreateCourse(data.courses);
+    const createdCourse: any = await callCreateCourse(data.courses);
     response
       .status(201)
       .json({ message: "Course has been created", createdCourse });

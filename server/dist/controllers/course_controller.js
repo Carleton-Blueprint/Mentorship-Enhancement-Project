@@ -1,9 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addCourse = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
-let idNumber = 0;
+const prismaClient_1 = __importDefault(require("../prismaClient"));
 const addCourse = async (request, response) => {
     const data = request.body.data;
     // const validationErrors = validateMentors(mentors);
@@ -11,7 +12,7 @@ const addCourse = async (request, response) => {
     //   return response.status(400).json({ error: 'Validation error', details: validationErrors });
     // }
     try {
-        const createdCourse = callCreateCourse(data.courses);
+        const createdCourse = await callCreateCourse(data.courses);
         response
             .status(201)
             .json({ message: "Course has been created", createdCourse });
@@ -25,7 +26,7 @@ exports.addCourse = addCourse;
 const callCreateCourse = async (courses) => {
     console.log("data", courses);
     const upperCaseCourseCode = courses.courseCode.toUpperCase();
-    const createdCourse = await prisma.course.create({
+    const createdCourse = await prismaClient_1.default.course.create({
         data: {
             course_code: upperCaseCourseCode,
             course_name: courses.courseName,

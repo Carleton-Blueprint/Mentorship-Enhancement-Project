@@ -72,7 +72,9 @@ export const CsvButtonStudents = () => {
         Papa.parse(file, {
           header: true,
           complete: (results) => {
-            const toSend = mapToFields(results.data as ParsedData[]);
+            // Filter out entries with empty ID
+            const filteredData = (results.data as ParsedData[]).filter((entry) => entry["ID"] !== "");
+            const toSend = mapToFields(filteredData as ParsedData[]);
             setData(toSend);
             resolve(toSend);
           },
@@ -111,6 +113,7 @@ export const CsvButtonStudents = () => {
   // Mapping function
   const mapToFields = (students: ParsedData[]): Student[] => {
     return students.map((s: ParsedData): Student => {
+      
       const daysOfWeek = [
         "Monday",
         "Tuesday",
@@ -118,37 +121,48 @@ export const CsvButtonStudents = () => {
         "Thursday",
         "Friday",
       ];
-
-      const availability: Availability[] = daysOfWeek
-        .map((day) => {
-          const times = s[day]?.split(";").filter(Boolean) || [];
-          const parsedTimes: TimeRange[] = [];
-          times.forEach((time) => {
-            parsedTimes.push(parseTimeRange(time));
-          });
-          return {
-            day,
-            time_ranges: parsedTimes,
-          };
-        })
-        .filter((day) => day.time_ranges.length > 0);
-
+      
+      const availability: Availability[] =
+      daysOfWeek
+      .map((day) => {
+        const times = s[day]?.split(";").filter(Boolean) || [];
+        const parsedTimes: TimeRange[] = [];
+        times.forEach((time) => {
+          parsedTimes.push(parseTimeRange(time));
+        });
+        return {
+          day,
+          time_ranges: parsedTimes,
+        };
+      })
+      .filter((day) => day.time_ranges.length > 0);
+      
+      console.log("s", s);
       const courses = s[
         "Please list any courses in which you would like to improve your grades."
       ]
-        .split(",")
-        .map((course: string) => course.trim());
+      .split(", ")
+      .map((course: string) => course.trim());
+        
+      const student_id = parseInt(s["Student Number"]);
+      let year_level = parseInt(s["What is your year level?"]);
+
+      // Check if year_level is NaN and handle it
+      if (isNaN(year_level)) {
+        console.warn(`Invalid year level for student ID ${student_id}:`, s["What is your year level?"]);
+        year_level = 0; // or any default value you prefer
+      }
 
       return {
         id: parseInt(s["ID"]),
-        student_id: parseInt(s["Student Number"]),
+        student_id: student_id,
         email: s["Carleton Email"],
         first_name: s["First Name"],
         last_name: s["Last Name"],
         major: s["What is your major?"],
         preferred_name: s["Preferred Name"],
         preferred_pronouns: s["Preferred Pronouns"],
-        year_level: parseInt(s["What is your year level?"]),
+        year_level: year_level,
         courses,
         availability,
       };

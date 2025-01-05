@@ -2,11 +2,9 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import { Request, Response } from "express";
-
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prismaClient';
 
 dotenv.config();
-const prisma = new PrismaClient();
 
 interface User {
   id?: number,

@@ -7,9 +7,8 @@ exports.registerUser = exports.loginRoute = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const client_1 = require("@prisma/client");
+const prismaClient_1 = __importDefault(require("../prismaClient"));
 dotenv_1.default.config();
-const prisma = new client_1.PrismaClient();
 // Mock user data (Replace with your database query)
 const users = [
     {
@@ -62,7 +61,7 @@ const registerUser = async (req, res) => {
 exports.registerUser = registerUser;
 const findUserByEmail = async (email) => {
     try {
-        const user = await prisma.user.findUnique({
+        const user = await prismaClient_1.default.user.findUnique({
             where: {
                 email
             },
@@ -80,7 +79,7 @@ const findUserByEmail = async (email) => {
 };
 const createUser = async (email, password) => {
     try {
-        const newUser = await prisma.user.create({
+        const newUser = await prismaClient_1.default.user.create({
             data: {
                 email,
                 password
@@ -92,7 +91,7 @@ const createUser = async (email, password) => {
         console.error('Error creating user:', error);
     }
     finally {
-        await prisma.$disconnect();
+        await prismaClient_1.default.$disconnect();
     }
 };
 //# sourceMappingURL=auth_controller.js.map
