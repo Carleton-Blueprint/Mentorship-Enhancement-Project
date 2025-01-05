@@ -5,14 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertStudent = exports.insertManyStudents = void 0;
 const prismaClient_1 = __importDefault(require("../prismaClient"));
-const promises_1 = require("fs/promises");
 const insertManyStudents = async (request, response) => {
     console.log("entering default controller");
     const students = request.body.data;
     console.log('students', students);
     // Write to the file (replaces the file if it exists)
     try {
-        await (0, promises_1.writeFile)("output.txt", JSON.stringify(students));
         console.log("File written successfully");
     }
     catch (err) {
