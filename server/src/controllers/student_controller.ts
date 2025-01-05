@@ -27,7 +27,6 @@ const callCreate = async (students: any) => {
   for (const student of students) {
     console.log("student", student);
     for (const course of student.courses) {
-      // console.log("course", course);
       await prisma.course.upsert({
         where: { course_code: course },
         create: {
