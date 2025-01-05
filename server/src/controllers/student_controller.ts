@@ -11,13 +11,6 @@ export const insertManyStudents = async (request: any, response: any) => {
   console.log("entering default controller");
   const students = request.body.data;
   console.log('students', students)
-  // Write to the file (replaces the file if it exists)
-  try {
-    console.log("File written successfully");
-  } catch (err) {
-    console.error("Error writing to file", err);
-  }
-
   try {
     const createdStudents: any = callCreate(students);
     console.log('createdStudents');
