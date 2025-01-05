@@ -11,4 +11,5 @@ const reset_mentor_controller_js_1 = require("../controllers/reset_mentor_contro
 exports.mentorRouter.post('/deleteAllMentors', reset_mentor_controller_js_1.deleteAll);
 exports.mentorRouter.post('/insertMentors', mentor_controller_js_1.insertManyMentors);
 exports.mentorRouter.post('/updateMentorByID', mentor_controller_js_1.updateMentorByID);
+exports.mentorRouter.post('/addMentorAvailability', mentor_controller_js_1.addMentorAvailability);
 //# sourceMappingURL=mentorRoutes.js.map

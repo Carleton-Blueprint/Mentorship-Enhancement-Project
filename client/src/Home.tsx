@@ -11,7 +11,7 @@ import { ManageMentors } from "./ManageMentors";
 import { ManageStudents } from "./ManageStudents";
 import { CsvButtonMentors, Mentor } from "./importCsvButtonMentors";
 import { CsvButtonStudents, Student } from "./importCsvButtonStudents";
-import { ExportMatchedCsv, ExportUnmatchedCsv } from "./ExportCsv";
+import { ExportCsv } from "./ExportCsv";
 import useSignOut from "react-auth-kit/hooks/useSignOut";
 import { useToast } from "./hooks/use-toast";
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
@@ -23,11 +23,11 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
   const [menuExpanded, setMenuExpanded] = useState<Boolean>(false);
   const [coursesValid, setCoursesValid] = useState<Boolean>(true);
   const [availabilityValid, setAvailabilityValid] = useState<Boolean>(true);
-  const [Matchedcsv, setMatchedCsv] = useState<string>("");
-  const [Unmatchedcsv, setUnmatchedCsv] = useState<string>("");
+  const [csvData, setCsvData] = useState<string>("");
 
-
-  function plusIconClicked(event: React.MouseEvent<SVGSVGElement, MouseEvent>): void {
+  function plusIconClicked(
+    event: React.MouseEvent<SVGSVGElement, MouseEvent>
+  ): void {
     const target = event.currentTarget;
     if (menuExpanded) {
       target.classList.remove("rotate-45");
@@ -52,27 +52,22 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
       if (!response.data) {
         throw new Error("No CSV data received");
       }
-      console.log("query response.data", response.data.csvContent);
-      setMatchedCsv(response.data.csvContent);
-      setUnmatchedCsv(response.data.unmatchedCsvContent);
-      csvAlert(response.data.csvContent, response.data.unmatchedCsvContent);
+      const combinedCsv =
+        response.data.csvContent + "\n" + response.data.unmatchedCsvContent;
+      setCsvData(combinedCsv);
+      csvAlert(combinedCsv);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const csvAlert = (matched: string, unmatched: string) => {
+  const csvAlert = (csvData: string) => {
     toast({
       title: "CSV Generated",
       description: "The CSV has been generated",
       action: (
-        <div>
-          <div className=" bg-gray-200 align-right p-4 m-10 rounded-lg">
-            <ExportMatchedCsv csvString={matched} />
-          </div>
-          <div className=" bg-gray-200 align-right p-4 m-10 rounded-lg">
-            <ExportUnmatchedCsv csvString={unmatched} />
-          </div>
+        <div className="bg-gray-200 align-right p-4 m-10 rounded-lg">
+          <ExportCsv csvString={csvData} />
         </div>
       ),
     });
@@ -111,7 +106,7 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
             <div className="flex justify-between">
               <TabsList className="tabs-list-overlap w-[600px] grid grid-cols-4 p-0 rounded-full text-dark-grey bg-grey">
                 <div
-                  className={`absolute h-full transition-all duration-300 ease-in-out 
+                  className={`absolute h-full transition-all duration-300 ease-in-out
                     ${
                       manageEntities === "Student"
                         ? "translate-x-0"
@@ -122,7 +117,7 @@ export const Home = ({ setLoggedIn, loggedIn }: any) => {
                         : manageEntities === "Time"
                         ? "translate-x-[300%]"
                         : ""
-                    } 
+                    }
                     w-1/4 bg-red rounded-full select-none`}
                 ></div>
                 <TabsTrigger

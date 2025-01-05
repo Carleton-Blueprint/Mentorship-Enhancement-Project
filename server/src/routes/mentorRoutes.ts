@@ -3,7 +3,8 @@ export const mentorRouter = express.Router();
 
 import {
     insertManyMentors,
-    updateMentorByID
+    updateMentorByID,
+    addMentorAvailability
 } from "../controllers/mentor_controller.js";
 import {
     deleteAll
@@ -12,3 +13,4 @@ import {
 mentorRouter.post('/deleteAllMentors', deleteAll);
 mentorRouter.post('/insertMentors', insertManyMentors);
 mentorRouter.post('/updateMentorByID', updateMentorByID);
+mentorRouter.post('/addMentorAvailability', addMentorAvailability);

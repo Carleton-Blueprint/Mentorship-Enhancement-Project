@@ -96,7 +96,7 @@ export const AddTimeslots = () => {
           }[] = [];
           rows.forEach((row) => {
             console.log("row", row);
-            const new_row: {
+            let new_row: {
               availability: { [key: string]: string[] };
               "Student ID"?: string;
               "Full Name"?: string;
@@ -117,6 +117,7 @@ export const AddTimeslots = () => {
             new_row["Email Address"] = row[2];
             new_row["Year"] = row[3];
             new_row["Program"] = row[4];
+            console.log("new_row", new_row);
             const slotsPerDay = 12; // Group headers by day (12 slots per day)
             const days = [
               "Monday",
@@ -131,8 +132,8 @@ export const AddTimeslots = () => {
               //fill in this part
               const daySlots = [];
               for (let i = startIdx; i < endIdx; i++) {
-                if (row[i] === "Yes" || row[i] === "Planning") {
-                  daySlots.push(TIMES[(12 % 5) - 1]);
+                if (row[i + 5] === "Yes" || row[i + 5] === "Planning") {
+                  daySlots.push(TIMES[i - startIdx]);
                 }
               }
               console.log("dayslots", daySlots);
@@ -197,7 +198,8 @@ export const AddTimeslots = () => {
   const sendMentorData = async (csv: Mentor[]) => {
     console.log("csv in sendMentordata", csv);
     try {
-      await axios.post(`${serverUrl}/mentors/insertMentors`, {
+      console.log("serverurl", serverUrl);
+      await axios.post(`${serverUrl}/mentors/addMentorAvailability`, {
         data: csv,
       });
       setSent(true);
@@ -250,11 +252,7 @@ export const AddTimeslots = () => {
             }}
           >
             {fileName}
-            <span
-              onClick={handleRemoveFile}
-            >
-              {/* &times; */}
-            </span>
+            <span onClick={handleRemoveFile}>{/* &times; */}</span>
           </span>
         )}
       </form>
@@ -298,7 +296,7 @@ export const AddTimeslots = () => {
                     <TableCell>{mentor.name}</TableCell>
                     <TableCell>{mentor.email}</TableCell>
                     <TableCell>{mentor.program}</TableCell>
-                    <TableCell>{mentor.courses.join(", ")}</TableCell>
+                    {/* <TableCell>{mentor.courses.join(", ")}</TableCell> */}
                   </TableRow>
                 ))}
               </TableBody>
