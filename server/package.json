@@ -10,13 +10,13 @@
     "lint": "eslint . --ext .ts",
     "test": "jest",
     "postinstall": "echo 'Running prisma generate' && prisma generate"
-
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@netlify/functions": "^2.8.2",
+    "@supabase/supabase-js": "^2.47.10",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",

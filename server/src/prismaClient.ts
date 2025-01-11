@@ -20,21 +20,15 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-// Add metrics logging
-async function logMetrics() {
-  const metrics = await prisma.$metrics.json();
-  console.dir(metrics, { depth: Infinity });
-}
-
-// Add error handling for connection
+// Add connection retry logic
 prisma
   .$connect()
-  .then(async () => {
+  .then(() => {
     console.log("Successfully connected to database");
-    await logMetrics(); // Log metrics after successful connection
   })
   .catch((e) => {
     console.error("Failed to connect to database:", e);
+    process.exit(1); // Exit if we can't connect
   });
 
 // Add disconnect handling
