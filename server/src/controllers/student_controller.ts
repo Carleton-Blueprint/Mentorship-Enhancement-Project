@@ -68,20 +68,11 @@ const callCreate = async (student: any) => {
           create: student.availability.flatMap((avail) =>
             avail.time_ranges.map((time) => ({
               availability: {
-                connectOrCreate: {
-                  where: {
-                    unique_avail: {
-                      day: avail.day,
-                      start_time: convertToDate(time.start_time),
-                      end_time: convertToDate(time.end_time),
-                    },
-                  },
-                  create: {
-                    day: avail.day,
-                    start_time: convertToDate(time.start_time),
-                    end_time: convertToDate(time.end_time),
-                  },
-                },
+                create: {
+                  day: avail.day,
+                  start_time: convertToDate(time.start_time),
+                  end_time: convertToDate(time.end_time),
+                }
               },
             }))
           ),
@@ -106,20 +97,11 @@ const callCreate = async (student: any) => {
           create: student.availability.flatMap((avail) =>
             avail.time_ranges.map((time) => ({
               availability: {
-                connectOrCreate: {
-                  where: {
-                    unique_avail: {
-                      day: avail.day,
-                      start_time: convertToDate(time.start_time),
-                      end_time: convertToDate(time.end_time),
-                    },
-                  },
-                  create: {
-                    day: avail.day,
-                    start_time: convertToDate(time.start_time),
-                    end_time: convertToDate(time.end_time),
-                  },
-                },
+                create: {
+                  day: avail.day,
+                  start_time: convertToDate(time.start_time),
+                  end_time: convertToDate(time.end_time),
+                }
               },
             }))
           ),

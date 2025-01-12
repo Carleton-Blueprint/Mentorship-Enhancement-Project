@@ -56,26 +56,38 @@ CREATE TABLE "Student" (
 
 -- CreateTable
 CREATE TABLE "MentorAvailability" (
+    "id" SERIAL NOT NULL,
     "availability_id" INTEGER NOT NULL,
-    "mentor_id" INTEGER NOT NULL
+    "mentor_id" INTEGER NOT NULL,
+
+    CONSTRAINT "MentorAvailability_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "StudentAvailability" (
+    "id" SERIAL NOT NULL,
     "availability_id" INTEGER NOT NULL,
-    "student_id" INTEGER NOT NULL
+    "student_id" INTEGER NOT NULL,
+
+    CONSTRAINT "StudentAvailability_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "MentorCourse" (
+    "id" SERIAL NOT NULL,
     "course_id" INTEGER NOT NULL,
-    "mentor_id" INTEGER NOT NULL
+    "mentor_id" INTEGER NOT NULL,
+
+    CONSTRAINT "MentorCourse_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "StudentCourse" (
+    "id" SERIAL NOT NULL,
     "course_id" INTEGER NOT NULL,
-    "student_id" INTEGER NOT NULL
+    "student_id" INTEGER NOT NULL,
+
+    CONSTRAINT "StudentCourse_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
