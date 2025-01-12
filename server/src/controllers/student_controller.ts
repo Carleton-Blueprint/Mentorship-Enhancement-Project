@@ -16,7 +16,7 @@ export const insertManyStudents = async (request: any, response: any) => {
     console.log("File written successfully");
 
     // Process students in batches
-    const batchSize = 5; // Adjust based on your needs
+    const batchSize = 2; // Adjust based on your needs
     for (let i = 0; i < students.length; i += batchSize) {
       const batch = students.slice(i, i + batchSize);
       await Promise.all(batch.map((student) => callCreate(student)));
