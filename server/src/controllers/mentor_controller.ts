@@ -400,43 +400,46 @@ const callCreate = async (mentors: MentorData[]) => {
   };
 
   try {
-    // Log the courses being processed
-    console.log(
-      "Processing courses:",
-      mentors.flatMap((mentor) => mentor.courses || [])
-    );
+    console.log("Starting mentor creation with data:", mentors);
 
     // 1. Process all courses first
     const allCourses = new Set(
       mentors.flatMap((mentor) => mentor.courses || [])
     );
+    console.log("Found courses:", Array.from(allCourses));
 
     // Create courses if they don't exist
     if (allCourses.size > 0) {
-      await retryOperation(() =>
-        prisma.course.createMany({
+      await retryOperation(async () => {
+        console.log("Creating courses...");
+        const result = await prisma.course.createMany({
           data: Array.from(allCourses).map((code) => ({
             course_code: code,
             course_name: code,
           })),
           skipDuplicates: true,
-        })
-      );
+        });
+        console.log("Course creation result:", result);
+        return result;
+      });
     }
 
-    // Log created courses
+    // Get created courses
     const createdCourses = await prisma.course.findMany({
       where: {
         course_code: { in: Array.from(allCourses) },
       },
     });
-    console.log("Created courses:", createdCourses);
+    console.log("Found existing courses:", createdCourses);
 
-    // Process each mentor in sequence to ensure consistency
+    // Process each mentor
     for (const mentor of mentors) {
+      console.log(`Processing mentor ${mentor.mentor_id}`);
+
       // Create or update mentor
-      const createdMentor = await retryOperation(() =>
-        prisma.mentor.upsert({
+      const createdMentor = await retryOperation(async () => {
+        console.log(`Creating/updating mentor ${mentor.mentor_id}`);
+        return prisma.mentor.upsert({
           where: { mentor_id: mentor.mentor_id },
           create: {
             mentor_id: mentor.mentor_id,
@@ -451,30 +454,53 @@ const callCreate = async (mentors: MentorData[]) => {
             Program: mentor.program,
             year: mentor.year,
           },
-        })
-      );
+        });
+      });
+      console.log("Created/updated mentor:", createdMentor);
 
-      // Create course connections for this mentor
+      // Create course connections
       if (mentor.courses?.length) {
+        console.log(
+          `Creating course connections for mentor ${mentor.mentor_id}`
+        );
+
         // Delete existing connections
-        await prisma.mentorCourse.deleteMany({
+        const deleteResult = await prisma.mentorCourse.deleteMany({
           where: { mentor_id: createdMentor.id },
         });
+        console.log("Deleted existing connections:", deleteResult);
 
         // Create new connections
-        await prisma.mentorCourse.createMany({
-          data: mentor.courses.map((course) => ({
-            mentor_id: createdMentor.id,
-            course_id: createdCourses.find((c) => c.course_code === course)
-              ?.id!,
-          })),
-          skipDuplicates: true,
-        });
+        const courseConnections = mentor.courses
+          .map((course) => {
+            const courseId = createdCourses.find(
+              (c) => c.course_code === course
+            )?.id;
+            if (!courseId) {
+              console.error(`Could not find course ID for code: ${course}`);
+              return null;
+            }
+            return {
+              mentor_id: createdMentor.id,
+              course_id: courseId,
+            };
+          })
+          .filter(
+            (conn): conn is { mentor_id: number; course_id: number } =>
+              conn !== null
+          );
+
+        if (courseConnections.length > 0) {
+          const createResult = await prisma.mentorCourse.createMany({
+            data: courseConnections,
+            skipDuplicates: true,
+          });
+          console.log("Created course connections:", createResult);
+        }
       }
     }
 
-    // Log final state
-    console.log("Mentor creation completed");
+    console.log("Mentor creation completed successfully");
   } catch (error) {
     console.error("Error in callCreate:", error);
     throw error;
