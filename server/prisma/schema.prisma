@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -61,7 +61,7 @@ model Student {
 }
 
 model MentorAvailability {
-  id              Int @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   availability_id Int
   mentor_id       Int
   availability    Availability @relation(fields: [availability_id], references: [id])
@@ -71,7 +71,7 @@ model MentorAvailability {
 }
 
 model StudentAvailability {
-  id              Int @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   availability_id Int
   student_id      Int
   availability    Availability @relation(fields: [availability_id], references: [id])
@@ -81,7 +81,7 @@ model StudentAvailability {
 }
 
 model MentorCourse {
-  id        Int @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   course_id Int
   mentor_id Int
   course    Course @relation(fields: [course_id], references: [id])
@@ -91,7 +91,7 @@ model MentorCourse {
 }
 
 model StudentCourse {
-  id         Int @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   course_id  Int
   student_id Int
   course     Course  @relation(fields: [course_id], references: [id])

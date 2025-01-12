@@ -244,6 +244,10 @@ const addAvailability = async (mentor_data: any[]) => {
           skipDuplicates: true,
         })
       );
+      // Add small delay between batches
+      if (i + BATCH_SIZE < mentorCourseData.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     }
 
     // 2. Process availabilities in batches
@@ -354,6 +358,26 @@ const addAvailability = async (mentor_data: any[]) => {
 };
 
 const callCreate = async (mentors: MentorData[]) => {
+  const MAX_RETRIES = 3;
+  const BATCH_SIZE = 50;
+
+  const retryOperation = async (
+    operation: () => Promise<any>,
+    retries = MAX_RETRIES
+  ) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        console.error(`Attempt ${i + 1} failed:`, error);
+        if (i === retries - 1) throw error;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 1000)
+        );
+      }
+    }
+  };
+
   try {
     // 1. Process all courses first
     const allCourses = new Set(
@@ -362,46 +386,97 @@ const callCreate = async (mentors: MentorData[]) => {
 
     // Create courses if they don't exist
     if (allCourses.size > 0) {
-      await prisma.course.createMany({
-        data: Array.from(allCourses).map((code) => ({
-          course_code: code,
-          course_name: code,
-        })),
-        skipDuplicates: true,
-      });
+      await retryOperation(() =>
+        prisma.course.createMany({
+          data: Array.from(allCourses).map((code) => ({
+            course_code: code,
+            course_name: code,
+          })),
+          skipDuplicates: true,
+        })
+      );
     }
 
-    // 2. Create or update mentors
-    for (const mentor of mentors) {
-      await prisma.mentor.upsert({
+    // Get all course IDs after creation
+    const courses = await retryOperation(() =>
+      prisma.course.findMany({
         where: {
-          mentor_id: mentor.mentor_id,
+          course_code: { in: Array.from(allCourses) },
         },
-        create: {
-          mentor_id: mentor.mentor_id,
-          name: mentor.name,
-          email_address: mentor.email_address,
-          Program: mentor.program,
-          year: mentor.year,
-          MentorCourse: {
-            create: (mentor.courses || []).map((course) => ({
-              course: { connect: { course_code: course } },
-            })),
-          },
+        select: {
+          id: true,
+          course_code: true,
         },
-        update: {
-          name: mentor.name,
-          email_address: mentor.email_address,
-          Program: mentor.program,
-          year: mentor.year,
-          MentorCourse: {
-            deleteMany: {},
-            create: (mentor.courses || []).map((course) => ({
-              course: { connect: { course_code: course } },
-            })),
-          },
-        },
-      });
+      })
+    );
+
+    const courseCodeToId = new Map(courses.map((c) => [c.course_code, c.id]));
+
+    // 2. Create mentors in batches
+    for (let i = 0; i < mentors.length; i += BATCH_SIZE) {
+      const batch = mentors.slice(i, i + BATCH_SIZE);
+
+      // Create mentors first
+      for (const mentor of batch) {
+        await retryOperation(() =>
+          prisma.mentor.upsert({
+            where: { mentor_id: mentor.mentor_id },
+            create: {
+              mentor_id: mentor.mentor_id,
+              name: mentor.name,
+              email_address: mentor.email_address,
+              Program: mentor.program,
+              year: mentor.year,
+            },
+            update: {
+              name: mentor.name,
+              email_address: mentor.email_address,
+              Program: mentor.program,
+              year: mentor.year,
+            },
+          })
+        );
+      }
+
+      // Get created mentor IDs
+      const mentorIds = batch.map((m) => m.mentor_id);
+      const createdMentors = await retryOperation(() =>
+        prisma.mentor.findMany({
+          where: { mentor_id: { in: mentorIds } },
+          select: { id: true, mentor_id: true },
+        })
+      );
+
+      const mentorIdToDbId = new Map(
+        createdMentors.map((m) => [m.mentor_id, m.id])
+      );
+
+      // Create mentor-course connections
+      const mentorCourseData = batch
+        .flatMap((mentor) =>
+          (mentor.courses || []).map((course) => ({
+            mentor_id: mentorIdToDbId.get(mentor.mentor_id),
+            course_id: courseCodeToId.get(course),
+          }))
+        )
+        .filter(
+          (data): data is { mentor_id: number; course_id: number } =>
+            data.mentor_id != null && data.course_id != null
+        );
+
+      if (mentorCourseData.length > 0) {
+        await retryOperation(() =>
+          prisma.mentorCourse.createMany({
+            data: mentorCourseData,
+            skipDuplicates: true,
+          })
+        );
+      }
+
+      // Add delay between batches
+      if (i + BATCH_SIZE < mentors.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     }
   } catch (error) {
     console.error("Error in callCreate:", error);
