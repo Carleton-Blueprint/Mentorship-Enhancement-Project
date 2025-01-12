@@ -103,7 +103,7 @@ function validateMentors(mentors) {
         if(typeof(mentor.mentor_id) !== "number") {
           errors.push('Mentor id must be a number')
         }
-    
+
         if (mentor.MentorAvailability) {
           errors.push('Must indicate mentor availibility')
         }*/
@@ -114,10 +114,24 @@ function validateMentors(mentors) {
     return errors;
 }
 const addAvailability = async (mentor_data) => {
+    const MAX_RETRIES = 3;
+    const BATCH_SIZE = 50;
+    const retryOperation = async (operation, retries = MAX_RETRIES) => {
+        for (let i = 0; i < retries; i++) {
+            try {
+                return await operation();
+            }
+            catch (error) {
+                if (i === retries - 1 || !error.message?.includes("connection"))
+                    throw error;
+                await new Promise((resolve) => setTimeout(resolve, Math.pow(2, i) * 1000));
+            }
+        }
+    };
     try {
-        // 1. First check which mentors exist and which need to be created
+        // 1. Process mentors in batches
         const mentorIds = mentor_data.map((data) => parseInt(data["Student ID"]));
-        const existingMentors = await prismaClient_1.default.mentor.findMany({
+        const existingMentors = await retryOperation(() => prismaClient_1.default.mentor.findMany({
             where: {
                 mentor_id: { in: mentorIds },
             },
@@ -125,15 +139,15 @@ const addAvailability = async (mentor_data) => {
                 id: true,
                 mentor_id: true,
             },
-        });
+        }));
         const existingMentorIds = new Set(existingMentors.map((m) => m.mentor_id));
-        // Separate mentors into new and existing
+        // Split mentors into batches
         const mentorsToCreate = mentor_data.filter((data) => !existingMentorIds.has(parseInt(data["Student ID"])));
-        const mentorsToUpdate = mentor_data.filter((data) => existingMentorIds.has(parseInt(data["Student ID"])));
-        // Create new mentors if needed
-        if (mentorsToCreate.length > 0) {
-            await prismaClient_1.default.mentor.createMany({
-                data: mentorsToCreate.map((data) => ({
+        // Create mentors in batches
+        for (let i = 0; i < mentorsToCreate.length; i += BATCH_SIZE) {
+            const batch = mentorsToCreate.slice(i, i + BATCH_SIZE);
+            await retryOperation(() => prismaClient_1.default.mentor.createMany({
+                data: batch.map((data) => ({
                     mentor_id: parseInt(data["Student ID"]),
                     name: data["Full Name"],
                     email_address: data["Email Address"],
@@ -141,20 +155,9 @@ const addAvailability = async (mentor_data) => {
                     year: data.Year,
                 })),
                 skipDuplicates: true,
-            });
+            }));
         }
-        // Get all mentor IDs after creation
-        const allMentors = await prismaClient_1.default.mentor.findMany({
-            where: {
-                mentor_id: { in: mentorIds },
-            },
-            select: {
-                id: true,
-                mentor_id: true,
-            },
-        });
-        const mentorIdToDbId = new Map(allMentors.map((m) => [m.mentor_id, m.id]));
-        // 2. Process all availabilities
+        // 2. Process availabilities in batches
         const availabilityData = mentor_data.flatMap((data) => Object.entries(data.availability).flatMap(([day, timeSlots]) => timeSlots.map((slot) => {
             const timeRange = cleanTimeSlot(slot);
             const [startTime, endTime] = timeRange.split(" to ");
@@ -164,45 +167,64 @@ const addAvailability = async (mentor_data) => {
                 end_time: convertTimeStringToDate(endTime),
             };
         })));
-        // Create new availabilities
-        await prismaClient_1.default.availability.createMany({
-            data: availabilityData,
-            skipDuplicates: true,
-        });
-        // Get all availabilities
-        const allAvailabilities = await prismaClient_1.default.availability.findMany({
-            where: {
-                OR: availabilityData.map((avail) => ({
-                    AND: {
-                        day: avail.day,
-                        start_time: avail.start_time,
-                        end_time: avail.end_time,
-                    },
-                })),
-            },
-        });
-        // Create availability lookup map
+        // Create availabilities in batches
+        for (let i = 0; i < availabilityData.length; i += BATCH_SIZE) {
+            const batch = availabilityData.slice(i, i + BATCH_SIZE);
+            await retryOperation(() => prismaClient_1.default.availability.createMany({
+                data: batch,
+                skipDuplicates: true,
+            }));
+        }
+        // Get all mentor and availability IDs
+        const [allMentors, allAvailabilities] = await Promise.all([
+            retryOperation(() => prismaClient_1.default.mentor.findMany({
+                where: { mentor_id: { in: mentorIds } },
+                select: { id: true, mentor_id: true },
+            })),
+            retryOperation(() => prismaClient_1.default.availability.findMany({
+                where: {
+                    OR: availabilityData.map((avail) => ({
+                        AND: {
+                            day: avail.day,
+                            start_time: avail.start_time,
+                            end_time: avail.end_time,
+                        },
+                    })),
+                },
+            })),
+        ]);
+        // Create lookup maps
+        const mentorIdToDbId = new Map(allMentors.map((m) => [m.mentor_id, m.id]));
         const availabilityLookup = new Map(allAvailabilities.map((a) => [
             `${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`,
             a.id,
         ]));
-        // 3. Create mentor-availability connections
+        // 3. Create mentor-availability connections in batches
         const mentorAvailabilityData = mentor_data
             .flatMap((data) => Object.entries(data.availability).flatMap(([day, timeSlots]) => timeSlots.map((slot) => {
             const timeRange = cleanTimeSlot(slot);
             const [startTime, endTime] = timeRange.split(" to ");
             const availKey = `${day}-${convertTimeStringToDate(startTime).toISOString()}-${convertTimeStringToDate(endTime).toISOString()}`;
+            const mentorId = mentorIdToDbId.get(parseInt(data["Student ID"]));
+            const availabilityId = availabilityLookup.get(availKey);
             return {
-                mentor_id: mentorIdToDbId.get(parseInt(data["Student ID"])),
-                availability_id: availabilityLookup.get(availKey),
+                mentor_id: mentorId,
+                availability_id: availabilityId,
             };
         })))
             .filter((data) => data.mentor_id != null && data.availability_id != null);
-        // Create all mentor-availability connections
-        await prismaClient_1.default.mentorAvailability.createMany({
-            data: mentorAvailabilityData,
-            skipDuplicates: true,
-        });
+        // Create connections in batches
+        for (let i = 0; i < mentorAvailabilityData.length; i += BATCH_SIZE) {
+            const batch = mentorAvailabilityData.slice(i, i + BATCH_SIZE);
+            await retryOperation(() => prismaClient_1.default.mentorAvailability.createMany({
+                data: batch,
+                skipDuplicates: true,
+            }));
+            // Add small delay between batches
+            if (i + BATCH_SIZE < mentorAvailabilityData.length) {
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+        }
     }
     catch (error) {
         console.error("Error in addAvailability:", error);
