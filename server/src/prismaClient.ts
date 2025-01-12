@@ -30,11 +30,15 @@ const connectWithRetry = async (retries = 5) => {
     } catch (e) {
       console.error(`Failed to connect (attempt ${i + 1}/${retries}):`, e);
       if (i === retries - 1) {
+        console.error("Connection details:", {
+          host: process.env.DATABASE_URL?.split("@")[1]?.split("/")[0],
+          database: process.env.DATABASE_URL?.split("/").pop(),
+        });
         process.exit(1); // Exit if all retries failed
       }
-      // Wait before retrying (exponential backoff)
+      // Longer wait between retries
       await new Promise((resolve) =>
-        setTimeout(resolve, Math.pow(2, i) * 1000)
+        setTimeout(resolve, Math.pow(2, i) * 2000)
       );
     }
   }
