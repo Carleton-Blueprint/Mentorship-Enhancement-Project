@@ -9,16 +9,7 @@ const insertManyStudents = async (request, response) => {
     console.log("entering default controller");
     const students = request.body.data;
     try {
-        // Process students in smaller batches
-        const batchSize = 2; // Reduced from 5
-        for (let i = 0; i < students.length; i += batchSize) {
-            const batch = students.slice(i, i + batchSize);
-            await Promise.all(batch.map((student) => callCreate(student)));
-            // Add a small delay between batches
-            if (i + batchSize < students.length) {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-            }
-        }
+        await callCreate(students);
         response.status(201).json({ message: "Students have been created" });
     }
     catch (error) {
@@ -30,92 +21,201 @@ const insertManyStudents = async (request, response) => {
     }
 };
 exports.insertManyStudents = insertManyStudents;
-const callCreate = async (student) => {
+const callCreate = async (students) => {
+    console.log("Changing?");
     try {
-        // Batch course operations
-        await Promise.all(student.courses.map((course) => prismaClient_1.default.course.upsert({
-            where: { course_code: course },
-            create: {
-                course_code: course,
-                course_name: course,
+        // 1. Handle Courses
+        const uniqueCourses = new Set(students.flatMap(student => student.courses));
+        const existingCourses = await prismaClient_1.default.course.findMany({
+            where: {
+                course_code: {
+                    in: Array.from(uniqueCourses)
+                }
             },
-            update: {},
-        })));
-        // Create student with relationships and handle availability
-        return await prismaClient_1.default.student.upsert({
-            where: { student_id: student.student_id },
-            create: {
-                student_id: student.student_id,
-                first_name: student.first_name,
-                last_name: student.last_name,
-                email: student.email,
-                major: student.major,
-                preferred_name: student.preferred_name,
-                preferred_pronouns: student.preferred_pronouns,
-                year_level: student.year_level,
-                StudentCourse: {
-                    create: student.courses.map((course) => ({
-                        course: { connect: { course_code: course } },
-                    })),
-                },
-                StudentAvailability: {
-                    create: student.availability.flatMap((avail) => avail.time_ranges.map((time) => ({
-                        availability: {
-                            connectOrCreate: {
-                                where: {
-                                    unique_avail: {
-                                        day: avail.day,
-                                        start_time: convertToDate(time.start_time),
-                                        end_time: convertToDate(time.end_time),
-                                    },
-                                },
-                                create: {
-                                    day: avail.day,
-                                    start_time: convertToDate(time.start_time),
-                                    end_time: convertToDate(time.end_time),
-                                },
-                            },
-                        },
-                    }))),
-                },
-            },
-            update: {
-                first_name: student.first_name,
-                last_name: student.last_name,
-                email: student.email,
-                major: student.major,
-                preferred_name: student.preferred_name,
-                preferred_pronouns: student.preferred_pronouns,
-                year_level: student.year_level,
-                StudentCourse: {
-                    deleteMany: {},
-                    create: student.courses.map((course) => ({
-                        course: { connect: { course_code: course } },
-                    })),
-                },
-                StudentAvailability: {
-                    deleteMany: {},
-                    create: student.availability.flatMap((avail) => avail.time_ranges.map((time) => ({
-                        availability: {
-                            connectOrCreate: {
-                                where: {
-                                    unique_avail: {
-                                        day: avail.day,
-                                        start_time: convertToDate(time.start_time),
-                                        end_time: convertToDate(time.end_time),
-                                    },
-                                },
-                                create: {
-                                    day: avail.day,
-                                    start_time: convertToDate(time.start_time),
-                                    end_time: convertToDate(time.end_time),
-                                },
-                            },
-                        },
-                    }))),
-                },
-            },
+            select: { course_code: true }
         });
+        const existingCourseCodes = new Set(existingCourses.map(c => c.course_code));
+        const newCourses = Array.from(uniqueCourses).filter(code => !existingCourseCodes.has(code));
+        if (newCourses.length > 0) {
+            await prismaClient_1.default.course.createMany({
+                data: newCourses.map(code => ({
+                    course_code: code,
+                    course_name: code,
+                })),
+            });
+        }
+        // 2. Handle Availabilities
+        const availabilityData = students.flatMap(student => student.availability.flatMap(avail => avail.time_ranges.map(time => ({
+            day: avail.day,
+            start_time: convertToDate(time.start_time),
+            end_time: convertToDate(time.end_time),
+        }))));
+        const existingAvailabilities = await prismaClient_1.default.availability.findMany({
+            where: {
+                OR: availabilityData.map(avail => ({
+                    AND: {
+                        day: avail.day,
+                        start_time: avail.start_time,
+                        end_time: avail.end_time,
+                    }
+                }))
+            },
+            select: {
+                id: true,
+                day: true,
+                start_time: true,
+                end_time: true,
+            }
+        });
+        const existingAvailabilityKeys = new Set(existingAvailabilities.map(a => `${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`));
+        const newAvailabilities = availabilityData.filter(a => !existingAvailabilityKeys.has(`${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`));
+        if (newAvailabilities.length > 0) {
+            await prismaClient_1.default.availability.createMany({
+                data: newAvailabilities,
+            });
+        }
+        // Get all availabilities after creation to have their IDs
+        const allAvailabilities = await prismaClient_1.default.availability.findMany({
+            where: {
+                OR: availabilityData.map(avail => ({
+                    AND: {
+                        day: avail.day,
+                        start_time: avail.start_time,
+                        end_time: avail.end_time,
+                    }
+                }))
+            }
+        });
+        // Create availability lookup map for quick access
+        const availabilityLookup = new Map(allAvailabilities.map(a => [
+            `${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`,
+            a.id
+        ]));
+        // 3. Handle Students
+        const studentIds = students.map(s => s.student_id);
+        const existingStudents = await prismaClient_1.default.student.findMany({
+            where: {
+                student_id: {
+                    in: studentIds
+                }
+            },
+            select: {
+                id: true,
+                student_id: true,
+                first_name: true,
+                last_name: true,
+                email: true,
+                major: true,
+                preferred_name: true,
+                preferred_pronouns: true,
+                year_level: true
+            }
+        });
+        const existingStudentIds = new Set(existingStudents.map(s => s.student_id));
+        const studentIdToDbId = new Map(existingStudents.map(s => [s.student_id, s.id]));
+        // Separate students into new and those that need updating
+        const studentsToCreate = students.filter(s => !existingStudentIds.has(s.student_id));
+        const studentsToUpdate = students.filter(s => {
+            const existingStudent = existingStudents.find(es => es.student_id === s.student_id);
+            if (!existingStudent)
+                return false;
+            // Check if any fields need updating
+            return (existingStudent.first_name !== s.first_name ||
+                existingStudent.last_name !== s.last_name ||
+                existingStudent.email !== s.email ||
+                existingStudent.major !== s.major ||
+                existingStudent.preferred_name !== s.preferred_name ||
+                existingStudent.preferred_pronouns !== s.preferred_pronouns ||
+                existingStudent.year_level !== s.year_level);
+        });
+        // Create new students (base records only)
+        if (studentsToCreate.length > 0) {
+            await prismaClient_1.default.student.createMany({
+                data: studentsToCreate.map(student => ({
+                    student_id: student.student_id,
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    email: student.email,
+                    major: student.major,
+                    preferred_name: student.preferred_name,
+                    preferred_pronouns: student.preferred_pronouns,
+                    year_level: student.year_level,
+                })),
+            });
+            // Get the created students to have their IDs
+            const newlyCreatedStudents = await prismaClient_1.default.student.findMany({
+                where: {
+                    student_id: {
+                        in: studentsToCreate.map(s => s.student_id)
+                    }
+                },
+                select: {
+                    id: true,
+                    student_id: true
+                }
+            });
+            newlyCreatedStudents.forEach(s => studentIdToDbId.set(s.student_id, s.id));
+        }
+        // Update existing students (base records only)
+        if (studentsToUpdate.length > 0) {
+            await Promise.all(studentsToUpdate.map(student => prismaClient_1.default.student.update({
+                where: { student_id: student.student_id },
+                data: {
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    email: student.email,
+                    major: student.major,
+                    preferred_name: student.preferred_name,
+                    preferred_pronouns: student.preferred_pronouns,
+                    year_level: student.year_level,
+                },
+            })));
+        }
+        // 4. Handle StudentCourse relationships
+        // First, delete existing relationships for students being updated
+        if (studentsToUpdate.length > 0) {
+            await prismaClient_1.default.studentCourse.deleteMany({
+                where: {
+                    student_id: {
+                        in: studentsToUpdate.map(s => studentIdToDbId.get(s.student_id))
+                    }
+                }
+            });
+        }
+        // Create all StudentCourse relationships
+        const studentCourseData = students.flatMap(student => student.courses.map(course => ({
+            student_id: studentIdToDbId.get(student.student_id),
+            course_code: course
+        })));
+        if (studentCourseData.length > 0) {
+            await prismaClient_1.default.studentCourse.createMany({
+                data: studentCourseData,
+            });
+        }
+        // 5. Handle StudentAvailability relationships
+        // First, delete existing relationships for students being updated
+        if (studentsToUpdate.length > 0) {
+            await prismaClient_1.default.studentAvailability.deleteMany({
+                where: {
+                    student_id: {
+                        in: studentsToUpdate.map(s => studentIdToDbId.get(s.student_id))
+                    }
+                }
+            });
+        }
+        // Create all StudentAvailability relationships
+        const studentAvailabilityData = students.flatMap(student => student.availability.flatMap(avail => avail.time_ranges.map(time => {
+            const availKey = `${avail.day}-${convertToDate(time.start_time).toISOString()}-${convertToDate(time.end_time).toISOString()}`;
+            return {
+                student_id: studentIdToDbId.get(student.student_id),
+                availability_id: availabilityLookup.get(availKey)
+            };
+        })));
+        if (studentAvailabilityData.length > 0) {
+            await prismaClient_1.default.studentAvailability.createMany({
+                data: studentAvailabilityData,
+            });
+        }
     }
     catch (error) {
         console.error("Error in callCreate:", error);
