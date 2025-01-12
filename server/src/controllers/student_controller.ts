@@ -61,9 +61,11 @@ const callCreate = async (students: any[]) => {
     const existingAvailabilities = await prisma.availability.findMany({
       where: {
         OR: availabilityData.map(avail => ({
-          day: avail.day,
-          start_time: avail.start_time,
-          end_time: avail.end_time,
+          AND: {
+            day: avail.day,
+            start_time: avail.start_time,
+            end_time: avail.end_time,
+          }
         }))
       },
       select: {
@@ -93,9 +95,11 @@ const callCreate = async (students: any[]) => {
     const allAvailabilities = await prisma.availability.findMany({
       where: {
         OR: availabilityData.map(avail => ({
-          day: avail.day,
-          start_time: avail.start_time,
-          end_time: avail.end_time,
+          AND: {
+            day: avail.day,
+            start_time: avail.start_time,
+            end_time: avail.end_time,
+          }
         }))
       }
     });
