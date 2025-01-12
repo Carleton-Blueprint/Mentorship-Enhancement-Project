@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import prisma from "../prismaClient";
 
 let idNumber = 0;
@@ -129,9 +129,28 @@ function validateMentors(mentors: Prisma.MentorCreateInput[]): string[] {
   return errors;
 }
 
+let prismaInstance: PrismaClient | null = null;
+
+const getPrismaInstance = () => {
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
+      log: ["query", "info", "warn", "error"],
+    });
+  }
+  return prismaInstance;
+};
+
+const cleanupPrisma = async () => {
+  if (prismaInstance) {
+    await prismaInstance.$disconnect();
+    prismaInstance = null;
+  }
+};
+
 const addAvailability = async (mentor_data: any[]) => {
   const MAX_RETRIES = 3;
   const BATCH_SIZE = 50;
+  const prisma = getPrismaInstance();
 
   const retryOperation = async (
     operation: () => Promise<any>,
@@ -354,6 +373,8 @@ const addAvailability = async (mentor_data: any[]) => {
   } catch (error) {
     console.error("Error in addAvailability:", error);
     throw error;
+  } finally {
+    await cleanupPrisma();
   }
 };
 
@@ -379,6 +400,12 @@ const callCreate = async (mentors: MentorData[]) => {
   };
 
   try {
+    // Log the courses being processed
+    console.log(
+      "Processing courses:",
+      mentors.flatMap((mentor) => mentor.courses || [])
+    );
+
     // 1. Process all courses first
     const allCourses = new Set(
       mentors.flatMap((mentor) => mentor.courses || [])
@@ -397,87 +424,57 @@ const callCreate = async (mentors: MentorData[]) => {
       );
     }
 
-    // Get all course IDs after creation
-    const courses = await retryOperation(() =>
-      prisma.course.findMany({
-        where: {
-          course_code: { in: Array.from(allCourses) },
-        },
-        select: {
-          id: true,
-          course_code: true,
-        },
-      })
-    );
+    // Log created courses
+    const createdCourses = await prisma.course.findMany({
+      where: {
+        course_code: { in: Array.from(allCourses) },
+      },
+    });
+    console.log("Created courses:", createdCourses);
 
-    const courseCodeToId = new Map(courses.map((c) => [c.course_code, c.id]));
-
-    // 2. Create mentors in batches
-    for (let i = 0; i < mentors.length; i += BATCH_SIZE) {
-      const batch = mentors.slice(i, i + BATCH_SIZE);
-
-      // Create mentors first
-      for (const mentor of batch) {
-        await retryOperation(() =>
-          prisma.mentor.upsert({
-            where: { mentor_id: mentor.mentor_id },
-            create: {
-              mentor_id: mentor.mentor_id,
-              name: mentor.name,
-              email_address: mentor.email_address,
-              Program: mentor.program,
-              year: mentor.year,
-            },
-            update: {
-              name: mentor.name,
-              email_address: mentor.email_address,
-              Program: mentor.program,
-              year: mentor.year,
-            },
-          })
-        );
-      }
-
-      // Get created mentor IDs
-      const mentorIds = batch.map((m) => m.mentor_id);
-      const createdMentors = await retryOperation(() =>
-        prisma.mentor.findMany({
-          where: { mentor_id: { in: mentorIds } },
-          select: { id: true, mentor_id: true },
+    // Process each mentor in sequence to ensure consistency
+    for (const mentor of mentors) {
+      // Create or update mentor
+      const createdMentor = await retryOperation(() =>
+        prisma.mentor.upsert({
+          where: { mentor_id: mentor.mentor_id },
+          create: {
+            mentor_id: mentor.mentor_id,
+            name: mentor.name,
+            email_address: mentor.email_address,
+            Program: mentor.program,
+            year: mentor.year,
+          },
+          update: {
+            name: mentor.name,
+            email_address: mentor.email_address,
+            Program: mentor.program,
+            year: mentor.year,
+          },
         })
       );
 
-      const mentorIdToDbId = new Map(
-        createdMentors.map((m) => [m.mentor_id, m.id])
-      );
+      // Create course connections for this mentor
+      if (mentor.courses?.length) {
+        // Delete existing connections
+        await prisma.mentorCourse.deleteMany({
+          where: { mentor_id: createdMentor.id },
+        });
 
-      // Create mentor-course connections
-      const mentorCourseData = batch
-        .flatMap((mentor) =>
-          (mentor.courses || []).map((course) => ({
-            mentor_id: mentorIdToDbId.get(mentor.mentor_id),
-            course_id: courseCodeToId.get(course),
-          }))
-        )
-        .filter(
-          (data): data is { mentor_id: number; course_id: number } =>
-            data.mentor_id != null && data.course_id != null
-        );
-
-      if (mentorCourseData.length > 0) {
-        await retryOperation(() =>
-          prisma.mentorCourse.createMany({
-            data: mentorCourseData,
-            skipDuplicates: true,
-          })
-        );
-      }
-
-      // Add delay between batches
-      if (i + BATCH_SIZE < mentors.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Create new connections
+        await prisma.mentorCourse.createMany({
+          data: mentor.courses.map((course) => ({
+            mentor_id: createdMentor.id,
+            course_id: createdCourses.find((c) => c.course_code === course)
+              ?.id!,
+          })),
+          skipDuplicates: true,
+        });
       }
     }
+
+    // Log final state
+    console.log("Mentor creation completed");
   } catch (error) {
     console.error("Error in callCreate:", error);
     throw error;

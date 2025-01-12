@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addMentorAvailability = exports.updateMentorByID = exports.insertManyMentors = void 0;
+const client_1 = require("@prisma/client");
 const prismaClient_1 = __importDefault(require("../prismaClient"));
 let idNumber = 0;
 function cleanTimeSlot(timeSlot) {
@@ -103,7 +104,7 @@ function validateMentors(mentors) {
         if(typeof(mentor.mentor_id) !== "number") {
           errors.push('Mentor id must be a number')
         }
-    
+
         if (mentor.MentorAvailability) {
           errors.push('Must indicate mentor availibility')
         }*/
@@ -113,9 +114,25 @@ function validateMentors(mentors) {
     });
     return errors;
 }
+let prismaInstance = null;
+const getPrismaInstance = () => {
+    if (!prismaInstance) {
+        prismaInstance = new client_1.PrismaClient({
+            log: ["query", "info", "warn", "error"],
+        });
+    }
+    return prismaInstance;
+};
+const cleanupPrisma = async () => {
+    if (prismaInstance) {
+        await prismaInstance.$disconnect();
+        prismaInstance = null;
+    }
+};
 const addAvailability = async (mentor_data) => {
     const MAX_RETRIES = 3;
     const BATCH_SIZE = 50;
+    const prisma = getPrismaInstance();
     const retryOperation = async (operation, retries = MAX_RETRIES) => {
         for (let i = 0; i < retries; i++) {
             try {
@@ -131,7 +148,7 @@ const addAvailability = async (mentor_data) => {
     try {
         // 1. Process mentors in batches
         const mentorIds = mentor_data.map((data) => parseInt(data["Student ID"]));
-        const existingMentors = await retryOperation(() => prismaClient_1.default.mentor.findMany({
+        const existingMentors = await retryOperation(() => prisma.mentor.findMany({
             where: {
                 mentor_id: { in: mentorIds },
             },
@@ -146,7 +163,7 @@ const addAvailability = async (mentor_data) => {
         // Create mentors in batches
         for (let i = 0; i < mentorsToCreate.length; i += BATCH_SIZE) {
             const batch = mentorsToCreate.slice(i, i + BATCH_SIZE);
-            await retryOperation(() => prismaClient_1.default.mentor.createMany({
+            await retryOperation(() => prisma.mentor.createMany({
                 data: batch.map((data) => ({
                     mentor_id: parseInt(data["Student ID"]),
                     name: data["Full Name"],
@@ -161,7 +178,7 @@ const addAvailability = async (mentor_data) => {
         const allCourses = new Set(mentor_data.flatMap((data) => data.courses || []));
         // Create courses if they don't exist
         if (allCourses.size > 0) {
-            await retryOperation(() => prismaClient_1.default.course.createMany({
+            await retryOperation(() => prisma.course.createMany({
                 data: Array.from(allCourses).map((code) => ({
                     course_code: code,
                     course_name: code,
@@ -170,7 +187,7 @@ const addAvailability = async (mentor_data) => {
             }));
         }
         // Get course IDs
-        const courses = await retryOperation(() => prismaClient_1.default.course.findMany({
+        const courses = await retryOperation(() => prisma.course.findMany({
             where: {
                 course_code: { in: Array.from(allCourses) },
             },
@@ -190,7 +207,7 @@ const addAvailability = async (mentor_data) => {
         // Create course connections in batches
         for (let i = 0; i < mentorCourseData.length; i += BATCH_SIZE) {
             const batch = mentorCourseData.slice(i, i + BATCH_SIZE);
-            await retryOperation(() => prismaClient_1.default.mentorCourse.createMany({
+            await retryOperation(() => prisma.mentorCourse.createMany({
                 data: batch,
                 skipDuplicates: true,
             }));
@@ -212,18 +229,18 @@ const addAvailability = async (mentor_data) => {
         // Create availabilities in batches
         for (let i = 0; i < availabilityData.length; i += BATCH_SIZE) {
             const batch = availabilityData.slice(i, i + BATCH_SIZE);
-            await retryOperation(() => prismaClient_1.default.availability.createMany({
+            await retryOperation(() => prisma.availability.createMany({
                 data: batch,
                 skipDuplicates: true,
             }));
         }
         // Get all mentor and availability IDs
         const [allMentors, allAvailabilities] = await Promise.all([
-            retryOperation(() => prismaClient_1.default.mentor.findMany({
+            retryOperation(() => prisma.mentor.findMany({
                 where: { mentor_id: { in: mentorIds } },
                 select: { id: true, mentor_id: true },
             })),
-            retryOperation(() => prismaClient_1.default.availability.findMany({
+            retryOperation(() => prisma.availability.findMany({
                 where: {
                     OR: availabilityData.map((avail) => ({
                         AND: {
@@ -258,7 +275,7 @@ const addAvailability = async (mentor_data) => {
         // Create connections in batches
         for (let i = 0; i < mentorAvailabilityData.length; i += BATCH_SIZE) {
             const batch = mentorAvailabilityData.slice(i, i + BATCH_SIZE);
-            await retryOperation(() => prismaClient_1.default.mentorAvailability.createMany({
+            await retryOperation(() => prisma.mentorAvailability.createMany({
                 data: batch,
                 skipDuplicates: true,
             }));
@@ -271,6 +288,9 @@ const addAvailability = async (mentor_data) => {
     catch (error) {
         console.error("Error in addAvailability:", error);
         throw error;
+    }
+    finally {
+        await cleanupPrisma();
     }
 };
 const callCreate = async (mentors) => {
@@ -290,6 +310,8 @@ const callCreate = async (mentors) => {
         }
     };
     try {
+        // Log the courses being processed
+        console.log("Processing courses:", mentors.flatMap((mentor) => mentor.courses || []));
         // 1. Process all courses first
         const allCourses = new Set(mentors.flatMap((mentor) => mentor.courses || []));
         // Create courses if they don't exist
@@ -302,64 +324,51 @@ const callCreate = async (mentors) => {
                 skipDuplicates: true,
             }));
         }
-        // Get all course IDs after creation
-        const courses = await retryOperation(() => prismaClient_1.default.course.findMany({
+        // Log created courses
+        const createdCourses = await prismaClient_1.default.course.findMany({
             where: {
                 course_code: { in: Array.from(allCourses) },
             },
-            select: {
-                id: true,
-                course_code: true,
-            },
-        }));
-        const courseCodeToId = new Map(courses.map((c) => [c.course_code, c.id]));
-        // 2. Create mentors in batches
-        for (let i = 0; i < mentors.length; i += BATCH_SIZE) {
-            const batch = mentors.slice(i, i + BATCH_SIZE);
-            // Create mentors first
-            for (const mentor of batch) {
-                await retryOperation(() => prismaClient_1.default.mentor.upsert({
-                    where: { mentor_id: mentor.mentor_id },
-                    create: {
-                        mentor_id: mentor.mentor_id,
-                        name: mentor.name,
-                        email_address: mentor.email_address,
-                        Program: mentor.program,
-                        year: mentor.year,
-                    },
-                    update: {
-                        name: mentor.name,
-                        email_address: mentor.email_address,
-                        Program: mentor.program,
-                        year: mentor.year,
-                    },
-                }));
-            }
-            // Get created mentor IDs
-            const mentorIds = batch.map((m) => m.mentor_id);
-            const createdMentors = await retryOperation(() => prismaClient_1.default.mentor.findMany({
-                where: { mentor_id: { in: mentorIds } },
-                select: { id: true, mentor_id: true },
+        });
+        console.log("Created courses:", createdCourses);
+        // Process each mentor in sequence to ensure consistency
+        for (const mentor of mentors) {
+            // Create or update mentor
+            const createdMentor = await retryOperation(() => prismaClient_1.default.mentor.upsert({
+                where: { mentor_id: mentor.mentor_id },
+                create: {
+                    mentor_id: mentor.mentor_id,
+                    name: mentor.name,
+                    email_address: mentor.email_address,
+                    Program: mentor.program,
+                    year: mentor.year,
+                },
+                update: {
+                    name: mentor.name,
+                    email_address: mentor.email_address,
+                    Program: mentor.program,
+                    year: mentor.year,
+                },
             }));
-            const mentorIdToDbId = new Map(createdMentors.map((m) => [m.mentor_id, m.id]));
-            // Create mentor-course connections
-            const mentorCourseData = batch
-                .flatMap((mentor) => (mentor.courses || []).map((course) => ({
-                mentor_id: mentorIdToDbId.get(mentor.mentor_id),
-                course_id: courseCodeToId.get(course),
-            })))
-                .filter((data) => data.mentor_id != null && data.course_id != null);
-            if (mentorCourseData.length > 0) {
-                await retryOperation(() => prismaClient_1.default.mentorCourse.createMany({
-                    data: mentorCourseData,
+            // Create course connections for this mentor
+            if (mentor.courses?.length) {
+                // Delete existing connections
+                await prismaClient_1.default.mentorCourse.deleteMany({
+                    where: { mentor_id: createdMentor.id },
+                });
+                // Create new connections
+                await prismaClient_1.default.mentorCourse.createMany({
+                    data: mentor.courses.map((course) => ({
+                        mentor_id: createdMentor.id,
+                        course_id: createdCourses.find((c) => c.course_code === course)
+                            ?.id,
+                    })),
                     skipDuplicates: true,
-                }));
-            }
-            // Add delay between batches
-            if (i + BATCH_SIZE < mentors.length) {
-                await new Promise((resolve) => setTimeout(resolve, 100));
+                });
             }
         }
+        // Log final state
+        console.log("Mentor creation completed");
     }
     catch (error) {
         console.error("Error in callCreate:", error);
