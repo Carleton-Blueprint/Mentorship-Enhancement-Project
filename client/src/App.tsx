@@ -6,7 +6,7 @@ import { FileSpreadsheetIcon } from "lucide-react";
 
 function App() {
   //default should be false
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(true);
   return (
     <div>
       <Toaster />

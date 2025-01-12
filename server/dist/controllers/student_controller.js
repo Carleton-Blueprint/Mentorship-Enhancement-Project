@@ -5,62 +5,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertStudent = exports.insertManyStudents = void 0;
 const prismaClient_1 = __importDefault(require("../prismaClient"));
+const promises_1 = require("fs/promises");
 const insertManyStudents = async (request, response) => {
     console.log("entering default controller");
     const students = request.body.data;
-    console.log('students', students);
     try {
-        const createdStudents = callCreate(students);
-        console.log('createdStudents');
-        response
-            .status(201)
-            .json({ message: "Students have been created", createdStudents });
+        // Write to file
+        await (0, promises_1.writeFile)("output.txt", JSON.stringify(students));
+        console.log("File written successfully");
+        // Process students in batches
+        const batchSize = 5; // Adjust based on your needs
+        for (let i = 0; i < students.length; i += batchSize) {
+            const batch = students.slice(i, i + batchSize);
+            await Promise.all(batch.map((student) => callCreate(student)));
+        }
+        response.status(201).json({ message: "Students have been created" });
     }
     catch (error) {
-        console.log("entering error");
+        console.log("entering error", error);
         response.status(500).json({ error: error.message });
+    }
+    finally {
+        // Optionally disconnect if needed
+        // await prisma.$disconnect();
     }
 };
 exports.insertManyStudents = insertManyStudents;
-const callCreate = async (students) => {
-    for (const student of students) {
-        console.log("student", student);
-        for (const course of student.courses) {
-            await prismaClient_1.default.course.upsert({
-                where: { course_code: course },
-                create: {
-                    course_code: course,
-                    course_name: course,
-                },
-                update: {},
-            });
-        }
-        // Insert availabilities
-        for (const avail of student.availability) {
-            console.log("avail", avail);
-            for (const time of avail.time_ranges) {
-                await prismaClient_1.default.availability.upsert({
-                    where: {
-                        unique_avail: {
-                            day: avail.day,
-                            start_time: convertToDate(time.start_time),
-                            end_time: convertToDate(time.end_time),
-                        },
-                    },
-                    update: {},
-                    create: {
-                        day: avail.day,
-                        start_time: convertToDate(time.start_time),
-                        end_time: convertToDate(time.end_time),
-                    },
-                });
-            }
-        }
-        console.log("student.courses", student.courses);
-        // Insert student and link courses and availabilities
-        const createdStudent = await prismaClient_1.default.student.upsert({
-            where: { student_id: student.student_id },
+const callCreate = async (student) => {
+    try {
+        // Batch course operations
+        await Promise.all(student.courses.map((course) => prismaClient_1.default.course.upsert({
+            where: { course_code: course },
+            create: {
+                course_code: course,
+                course_name: course,
+            },
             update: {},
+        })));
+        // Create student with relationships and handle availability
+        return await prismaClient_1.default.student.upsert({
+            where: { student_id: student.student_id },
             create: {
                 student_id: student.student_id,
                 first_name: student.first_name,
@@ -78,8 +62,51 @@ const callCreate = async (students) => {
                 StudentAvailability: {
                     create: student.availability.flatMap((avail) => avail.time_ranges.map((time) => ({
                         availability: {
-                            connect: {
-                                unique_avail: {
+                            connectOrCreate: {
+                                where: {
+                                    unique_avail: {
+                                        day: avail.day,
+                                        start_time: convertToDate(time.start_time),
+                                        end_time: convertToDate(time.end_time),
+                                    },
+                                },
+                                create: {
+                                    day: avail.day,
+                                    start_time: convertToDate(time.start_time),
+                                    end_time: convertToDate(time.end_time),
+                                },
+                            },
+                        },
+                    }))),
+                },
+            },
+            update: {
+                first_name: student.first_name,
+                last_name: student.last_name,
+                email: student.email,
+                major: student.major,
+                preferred_name: student.preferred_name,
+                preferred_pronouns: student.preferred_pronouns,
+                year_level: student.year_level,
+                StudentCourse: {
+                    deleteMany: {},
+                    create: student.courses.map((course) => ({
+                        course: { connect: { course_code: course } },
+                    })),
+                },
+                StudentAvailability: {
+                    deleteMany: {},
+                    create: student.availability.flatMap((avail) => avail.time_ranges.map((time) => ({
+                        availability: {
+                            connectOrCreate: {
+                                where: {
+                                    unique_avail: {
+                                        day: avail.day,
+                                        start_time: convertToDate(time.start_time),
+                                        end_time: convertToDate(time.end_time),
+                                    },
+                                },
+                                create: {
                                     day: avail.day,
                                     start_time: convertToDate(time.start_time),
                                     end_time: convertToDate(time.end_time),
@@ -90,7 +117,10 @@ const callCreate = async (students) => {
                 },
             },
         });
-        console.log("createdStudent YYYYYYYYYYYYY", createdStudent);
+    }
+    catch (error) {
+        console.error("Error in callCreate:", error);
+        throw error;
     }
 };
 // Function to perform custom validation
@@ -179,10 +209,10 @@ const createStudent = async (student) => {
             student_id: student["student_id"],
             first_name: student["first_name"],
             last_name: student["last_name"],
+            email: student["email"],
             major: student["major"],
             preferred_name: student["preferred_name"],
             preferred_pronouns: student["preferred_pronouns"],
-            email: student["email"],
             year_level: student["year_level"],
             StudentCourse: {
                 create: student["StudentCourse"].map((course) => ({
@@ -190,17 +220,24 @@ const createStudent = async (student) => {
                 })),
             },
             StudentAvailability: {
-                create: avail.map((time) => ({
+                create: student.availability.flatMap((avail) => avail.time_ranges.map((time) => ({
                     availability: {
-                        connect: {
-                            unique_avail: {
-                                day: time["day"],
-                                start_time: convertToDate(time.startTime),
-                                end_time: convertToDate(time.endTime),
+                        connectOrCreate: {
+                            where: {
+                                unique_avail: {
+                                    day: avail.day,
+                                    start_time: convertToDate(time.start_time),
+                                    end_time: convertToDate(time.end_time),
+                                },
+                            },
+                            create: {
+                                day: avail.day,
+                                start_time: convertToDate(time.start_time),
+                                end_time: convertToDate(time.end_time),
                             },
                         },
                     },
-                })),
+                }))),
             },
         },
     });

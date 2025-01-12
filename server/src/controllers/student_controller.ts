@@ -10,14 +10,9 @@ interface Time {
 export const insertManyStudents = async (request: any, response: any) => {
   console.log("entering default controller");
   const students = request.body.data;
-<<<<<<< HEAD
-  console.log('students', students)
-=======
-
->>>>>>> 462053c (resolving connection pooling issue)
   try {
     // Write to file
-    await writeFile("output.txt", JSON.stringify(students));
+    // await writeFile("output.txt", JSON.stringify(students));
     console.log("File written successfully");
 
     // Process students in batches
@@ -53,32 +48,9 @@ const callCreate = async (student: any) => {
       )
     );
 
-    // Batch availability operations
-    const availabilityPromises = student.availability.flatMap((avail) =>
-      avail.time_ranges.map((time) =>
-        prisma.availability.upsert({
-          where: {
-            unique_avail: {
-              day: avail.day,
-              start_time: convertToDate(time.start_time),
-              end_time: convertToDate(time.end_time),
-            },
-          },
-          update: {},
-          create: {
-            day: avail.day,
-            start_time: convertToDate(time.start_time),
-            end_time: convertToDate(time.end_time),
-          },
-        })
-      )
-    );
-    await Promise.all(availabilityPromises);
-
-    // Create student with relationships
+    // Create student with relationships and handle availability
     return await prisma.student.upsert({
       where: { student_id: student.student_id },
-      update: {},
       create: {
         student_id: student.student_id,
         first_name: student.first_name,
@@ -97,8 +69,53 @@ const callCreate = async (student: any) => {
           create: student.availability.flatMap((avail) =>
             avail.time_ranges.map((time) => ({
               availability: {
-                connect: {
-                  unique_avail: {
+                connectOrCreate: {
+                  where: {
+                    unique_avail: {
+                      day: avail.day,
+                      start_time: convertToDate(time.start_time),
+                      end_time: convertToDate(time.end_time),
+                    },
+                  },
+                  create: {
+                    day: avail.day,
+                    start_time: convertToDate(time.start_time),
+                    end_time: convertToDate(time.end_time),
+                  },
+                },
+              },
+            }))
+          ),
+        },
+      },
+      update: {
+        first_name: student.first_name,
+        last_name: student.last_name,
+        email: student.email,
+        major: student.major,
+        preferred_name: student.preferred_name,
+        preferred_pronouns: student.preferred_pronouns,
+        year_level: student.year_level,
+        StudentCourse: {
+          deleteMany: {},
+          create: student.courses.map((course) => ({
+            course: { connect: { course_code: course } },
+          })),
+        },
+        StudentAvailability: {
+          deleteMany: {},
+          create: student.availability.flatMap((avail) =>
+            avail.time_ranges.map((time) => ({
+              availability: {
+                connectOrCreate: {
+                  where: {
+                    unique_avail: {
+                      day: avail.day,
+                      start_time: convertToDate(time.start_time),
+                      end_time: convertToDate(time.end_time),
+                    },
+                  },
+                  create: {
                     day: avail.day,
                     start_time: convertToDate(time.start_time),
                     end_time: convertToDate(time.end_time),
@@ -208,10 +225,10 @@ const createStudent = async (student: any) => {
       student_id: student["student_id"],
       first_name: student["first_name"],
       last_name: student["last_name"],
+      email: student["email"],
       major: student["major"],
       preferred_name: student["preferred_name"],
       preferred_pronouns: student["preferred_pronouns"],
-      email: student["email"],
       year_level: student["year_level"],
       StudentCourse: {
         create: student["StudentCourse"].map((course) => ({
@@ -219,17 +236,26 @@ const createStudent = async (student: any) => {
         })),
       },
       StudentAvailability: {
-        create: avail.map((time) => ({
-          availability: {
-            connect: {
-              unique_avail: {
-                day: time["day"],
-                start_time: convertToDate(time.startTime),
-                end_time: convertToDate(time.endTime),
+        create: student.availability.flatMap((avail) =>
+          avail.time_ranges.map((time) => ({
+            availability: {
+              connectOrCreate: {
+                where: {
+                  unique_avail: {
+                    day: avail.day,
+                    start_time: convertToDate(time.start_time),
+                    end_time: convertToDate(time.end_time),
+                  },
+                },
+                create: {
+                  day: avail.day,
+                  start_time: convertToDate(time.start_time),
+                  end_time: convertToDate(time.end_time),
+                },
               },
             },
-          },
-        })),
+          }))
+        ),
       },
     },
   });

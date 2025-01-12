@@ -15,7 +15,7 @@ const prisma = globalForPrisma.prisma ??
 if (process.env.NODE_ENV !== "production") {
     globalForPrisma.prisma = prisma;
 }
-// Add error handling for connection
+// Add connection retry logic
 prisma
     .$connect()
     .then(() => {
@@ -23,6 +23,7 @@ prisma
 })
     .catch((e) => {
     console.error("Failed to connect to database:", e);
+    process.exit(1); // Exit if we can't connect
 });
 // Add disconnect handling
 process.on("beforeExit", async () => {
