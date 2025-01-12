@@ -11,15 +11,15 @@ export const insertManyStudents = async (request: any, response: any) => {
   console.log("entering default controller");
   const students = request.body.data;
   try {
-    // Write to file
-    // await writeFile("output.txt", JSON.stringify(students));
-    console.log("File written successfully");
-
-    // Process students in batches
-    const batchSize = 2; // Adjust based on your needs
+    // Process students in smaller batches
+    const batchSize = 2; // Reduced from 5
     for (let i = 0; i < students.length; i += batchSize) {
       const batch = students.slice(i, i + batchSize);
       await Promise.all(batch.map((student) => callCreate(student)));
+      // Add a small delay between batches
+      if (i + batchSize < students.length) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
     response.status(201).json({ message: "Students have been created" });
@@ -27,8 +27,7 @@ export const insertManyStudents = async (request: any, response: any) => {
     console.log("entering error", error);
     response.status(500).json({ error: error.message });
   } finally {
-    // Optionally disconnect if needed
-    // await prisma.$disconnect();
+    await prisma.$disconnect(); // Ensure connection is closed
   }
 };
 

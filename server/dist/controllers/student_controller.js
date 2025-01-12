@@ -5,19 +5,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertStudent = exports.insertManyStudents = void 0;
 const prismaClient_1 = __importDefault(require("../prismaClient"));
-const promises_1 = require("fs/promises");
 const insertManyStudents = async (request, response) => {
     console.log("entering default controller");
     const students = request.body.data;
     try {
-        // Write to file
-        await (0, promises_1.writeFile)("output.txt", JSON.stringify(students));
-        console.log("File written successfully");
-        // Process students in batches
-        const batchSize = 5; // Adjust based on your needs
+        // Process students in smaller batches
+        const batchSize = 2; // Reduced from 5
         for (let i = 0; i < students.length; i += batchSize) {
             const batch = students.slice(i, i + batchSize);
             await Promise.all(batch.map((student) => callCreate(student)));
+            // Add a small delay between batches
+            if (i + batchSize < students.length) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
         }
         response.status(201).json({ message: "Students have been created" });
     }
@@ -26,8 +26,7 @@ const insertManyStudents = async (request, response) => {
         response.status(500).json({ error: error.message });
     }
     finally {
-        // Optionally disconnect if needed
-        // await prisma.$disconnect();
+        await prismaClient_1.default.$disconnect(); // Ensure connection is closed
     }
 };
 exports.insertManyStudents = insertManyStudents;
