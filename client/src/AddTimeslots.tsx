@@ -12,6 +12,8 @@ import {
   TableBody,
   TableCell,
 } from "./components/ui/table";
+import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
@@ -279,29 +281,14 @@ export const AddTimeslots = () => {
       <br />
       <div>
         {sent && (
-          <div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Program</TableHead>
-                  <TableHead>Courses</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((mentor: any) => (
-                  <TableRow>
-                    <TableCell>{mentor.name}</TableCell>
-                    <TableCell>{mentor.email}</TableCell>
-                    <TableCell>{mentor.program}</TableCell>
-                    {/* <TableCell>{mentor.courses.join(", ")}</TableCell> */}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <Alert className="bg-green-50 border-green-200 mt-4">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800">Success</AlertTitle>
+            <AlertDescription className="text-green-700">
+              Successfully added availability for{data.length} mentor
+              {data.length !== 1 ? "s" : ""} to the system.
+            </AlertDescription>
+          </Alert>
         )}
       </div>
     </div>
