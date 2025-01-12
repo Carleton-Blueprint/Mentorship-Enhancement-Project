@@ -118,16 +118,37 @@ const callCreate = async (students: any[]) => {
       },
       select: {
         id: true,
-        student_id: true
+        student_id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        major: true,
+        preferred_name: true,
+        preferred_pronouns: true,
+        year_level: true
       }
     });
 
     const existingStudentIds = new Set(existingStudents.map(s => s.student_id));
     const studentIdToDbId = new Map(existingStudents.map(s => [s.student_id, s.id]));
     
-    // Separate students into new and existing
+    // Separate students into new and those that need updating
     const studentsToCreate = students.filter(s => !existingStudentIds.has(s.student_id));
-    const studentsToUpdate = students.filter(s => existingStudentIds.has(s.student_id));
+    const studentsToUpdate = students.filter(s => {
+      const existingStudent = existingStudents.find(es => es.student_id === s.student_id);
+      if (!existingStudent) return false;
+
+      // Check if any fields need updating
+      return (
+        existingStudent.first_name !== s.first_name ||
+        existingStudent.last_name !== s.last_name ||
+        existingStudent.email !== s.email ||
+        existingStudent.major !== s.major ||
+        existingStudent.preferred_name !== s.preferred_name ||
+        existingStudent.preferred_pronouns !== s.preferred_pronouns ||
+        existingStudent.year_level !== s.year_level
+      );
+    });
 
     // Create new students (base records only)
     if (studentsToCreate.length > 0) {
@@ -162,20 +183,22 @@ const callCreate = async (students: any[]) => {
 
     // Update existing students (base records only)
     if (studentsToUpdate.length > 0) {
-      for (const student of studentsToUpdate) {
-        await prisma.student.update({
-          where: { student_id: student.student_id },
-          data: {
-            first_name: student.first_name,
-            last_name: student.last_name,
-            email: student.email,
-            major: student.major,
-            preferred_name: student.preferred_name,
-            preferred_pronouns: student.preferred_pronouns,
-            year_level: student.year_level,
-          },
-        });
-      }
+      await Promise.all(
+        studentsToUpdate.map(student =>
+          prisma.student.update({
+            where: { student_id: student.student_id },
+            data: {
+              first_name: student.first_name,
+              last_name: student.last_name,
+              email: student.email,
+              major: student.major,
+              preferred_name: student.preferred_name,
+              preferred_pronouns: student.preferred_pronouns,
+              year_level: student.year_level,
+            },
+          })
+        )
+      );
     }
 
     // 4. Handle StudentCourse relationships
