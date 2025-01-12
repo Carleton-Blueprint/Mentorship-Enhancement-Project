@@ -157,6 +157,44 @@ const addAvailability = async (mentor_data) => {
                 skipDuplicates: true,
             }));
         }
+        // Add course handling after mentor creation
+        const allCourses = new Set(mentor_data.flatMap((data) => data.courses || []));
+        // Create courses if they don't exist
+        if (allCourses.size > 0) {
+            await retryOperation(() => prismaClient_1.default.course.createMany({
+                data: Array.from(allCourses).map((code) => ({
+                    course_code: code,
+                    course_name: code,
+                })),
+                skipDuplicates: true,
+            }));
+        }
+        // Get course IDs
+        const courses = await retryOperation(() => prismaClient_1.default.course.findMany({
+            where: {
+                course_code: { in: Array.from(allCourses) },
+            },
+            select: {
+                id: true,
+                course_code: true,
+            },
+        }));
+        const courseCodeToId = new Map(courses.map((c) => [c.course_code, c.id]));
+        // Create mentor-course connections
+        const mentorCourseData = mentor_data
+            .flatMap((data) => (data.courses || []).map((course) => ({
+            mentor_id: mentorIdToDbId.get(parseInt(data["Student ID"])),
+            course_id: courseCodeToId.get(course),
+        })))
+            .filter((data) => data.mentor_id != null && data.course_id != null);
+        // Create course connections in batches
+        for (let i = 0; i < mentorCourseData.length; i += BATCH_SIZE) {
+            const batch = mentorCourseData.slice(i, i + BATCH_SIZE);
+            await retryOperation(() => prismaClient_1.default.mentorCourse.createMany({
+                data: batch,
+                skipDuplicates: true,
+            }));
+        }
         // 2. Process availabilities in batches
         const availabilityData = mentor_data.flatMap((data) => Object.entries(data.availability).flatMap(([day, timeSlots]) => timeSlots.map((slot) => {
             const timeRange = cleanTimeSlot(slot);
