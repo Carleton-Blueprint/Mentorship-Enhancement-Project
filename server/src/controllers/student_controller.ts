@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import prisma from '../prismaClient';
+import prisma from "../prismaClient";
 import { writeFile, appendFile } from "fs/promises";
 
 interface Time {
@@ -10,38 +10,53 @@ interface Time {
 export const insertManyStudents = async (request: any, response: any) => {
   console.log("entering default controller");
   const students = request.body.data;
+<<<<<<< HEAD
   console.log('students', students)
+=======
+
+>>>>>>> 462053c (resolving connection pooling issue)
   try {
-    const createdStudents: any = callCreate(students);
-    console.log('createdStudents');
-    response
-      .status(201)
-      .json({ message: "Students have been created", createdStudents });
+    // Write to file
+    await writeFile("output.txt", JSON.stringify(students));
+    console.log("File written successfully");
+
+    // Process students in batches
+    const batchSize = 5; // Adjust based on your needs
+    for (let i = 0; i < students.length; i += batchSize) {
+      const batch = students.slice(i, i + batchSize);
+      await Promise.all(batch.map((student) => callCreate(student)));
+    }
+
+    response.status(201).json({ message: "Students have been created" });
   } catch (error: any) {
-    console.log("entering error");
+    console.log("entering error", error);
     response.status(500).json({ error: error.message });
+  } finally {
+    // Optionally disconnect if needed
+    // await prisma.$disconnect();
   }
 };
 
-const callCreate = async (students: any) => {
-  for (const student of students) {
-    console.log("student", student);
-    for (const course of student.courses) {
-      await prisma.course.upsert({
-        where: { course_code: course },
-        create: {
-          course_code: course,
-          course_name: course,
-        },
-        update: {},
-      });
-    }
+const callCreate = async (student: any) => {
+  try {
+    // Batch course operations
+    await Promise.all(
+      student.courses.map((course) =>
+        prisma.course.upsert({
+          where: { course_code: course },
+          create: {
+            course_code: course,
+            course_name: course,
+          },
+          update: {},
+        })
+      )
+    );
 
-    // Insert availabilities
-    for (const avail of student.availability) {
-      console.log("avail", avail);
-      for (const time of avail.time_ranges) {
-        await prisma.availability.upsert({
+    // Batch availability operations
+    const availabilityPromises = student.availability.flatMap((avail) =>
+      avail.time_ranges.map((time) =>
+        prisma.availability.upsert({
           where: {
             unique_avail: {
               day: avail.day,
@@ -55,13 +70,13 @@ const callCreate = async (students: any) => {
             start_time: convertToDate(time.start_time),
             end_time: convertToDate(time.end_time),
           },
-        });
-      }
-    }
+        })
+      )
+    );
+    await Promise.all(availabilityPromises);
 
-    console.log("student.courses", student.courses);
-    // Insert student and link courses and availabilities
-    const createdStudent = await prisma.student.upsert({
+    // Create student with relationships
+    return await prisma.student.upsert({
       where: { student_id: student.student_id },
       update: {},
       create: {
@@ -95,7 +110,9 @@ const callCreate = async (students: any) => {
         },
       },
     });
-    console.log("createdStudent YYYYYYYYYYYYY", createdStudent);
+  } catch (error) {
+    console.error("Error in callCreate:", error);
+    throw error;
   }
 };
 // Function to perform custom validation
