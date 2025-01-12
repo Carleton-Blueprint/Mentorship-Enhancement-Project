@@ -184,11 +184,25 @@ const callCreate = async (students) => {
                 }
             });
         }
+        // Get all courses with their IDs
+        const coursesWithIds = await prismaClient_1.default.course.findMany({
+            where: {
+                course_code: {
+                    in: Array.from(uniqueCourses)
+                }
+            },
+            select: {
+                id: true,
+                course_code: true
+            }
+        });
+        // Create a lookup map for course IDs
+        const courseCodeToId = new Map(coursesWithIds.map(c => [c.course_code, c.id]));
         // Create all StudentCourse relationships
         const studentCourseData = students.flatMap(student => student.courses.map(course => ({
             student_id: studentIdToDbId.get(student.student_id),
-            course_code: course
-        })));
+            course_id: courseCodeToId.get(course)
+        }))).filter(data => data.student_id != null && data.course_id != null);
         if (studentCourseData.length > 0) {
             await prismaClient_1.default.studentCourse.createMany({
                 data: studentCourseData,
