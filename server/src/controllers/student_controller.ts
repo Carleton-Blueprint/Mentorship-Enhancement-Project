@@ -130,48 +130,53 @@ const callCreate = async (students: any[]) => {
     const studentsToUpdate = students.filter(s => existingStudentIds.has(s.student_id));
 
     // Create new students (base records only)
-    let createdStudents = [];
     if (studentsToCreate.length > 0) {
-      createdStudents = await prisma.$transaction(
-        studentsToCreate.map(student =>
-          prisma.student.create({
-            data: {
-              student_id: student.student_id,
-              first_name: student.first_name,
-              last_name: student.last_name,
-              email: student.email,
-              major: student.major,
-              preferred_name: student.preferred_name,
-              preferred_pronouns: student.preferred_pronouns,
-              year_level: student.year_level,
-            },
-          })
-        )
-      );
+      await prisma.student.createMany({
+        data: studentsToCreate.map(student => ({
+          student_id: student.student_id,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          email: student.email,
+          major: student.major,
+          preferred_name: student.preferred_name,
+          preferred_pronouns: student.preferred_pronouns,
+          year_level: student.year_level,
+        })),
+        skipDuplicates: true,
+      });
+
+      // Get the created students to have their IDs
+      const newlyCreatedStudents = await prisma.student.findMany({
+        where: {
+          student_id: {
+            in: studentsToCreate.map(s => s.student_id)
+          }
+        },
+        select: {
+          id: true,
+          student_id: true
+        }
+      });
+      newlyCreatedStudents.forEach(s => studentIdToDbId.set(s.student_id, s.id));
     }
 
     // Update existing students (base records only)
     if (studentsToUpdate.length > 0) {
-      await prisma.$transaction(
-        studentsToUpdate.map(student =>
-          prisma.student.update({
-            where: { student_id: student.student_id },
-            data: {
-              first_name: student.first_name,
-              last_name: student.last_name,
-              email: student.email,
-              major: student.major,
-              preferred_name: student.preferred_name,
-              preferred_pronouns: student.preferred_pronouns,
-              year_level: student.year_level,
-            },
-          })
-        )
-      );
+      for (const student of studentsToUpdate) {
+        await prisma.student.update({
+          where: { student_id: student.student_id },
+          data: {
+            first_name: student.first_name,
+            last_name: student.last_name,
+            email: student.email,
+            major: student.major,
+            preferred_name: student.preferred_name,
+            preferred_pronouns: student.preferred_pronouns,
+            year_level: student.year_level,
+          },
+        });
+      }
     }
-
-    // Add newly created students to the ID lookup
-    createdStudents.forEach(s => studentIdToDbId.set(s.student_id, s.id));
 
     // 4. Handle StudentCourse relationships
     // First, delete existing relationships for students being updated
@@ -189,18 +194,15 @@ const callCreate = async (students: any[]) => {
     const studentCourseData = students.flatMap(student => 
       student.courses.map(course => ({
         student_id: studentIdToDbId.get(student.student_id),
-        course: { connect: { course_code: course } }
+        course_code: course
       }))
     );
 
     if (studentCourseData.length > 0) {
-      await prisma.$transaction(
-        studentCourseData.map(data =>
-          prisma.studentCourse.create({
-            data: data
-          })
-        )
-      );
+      await prisma.studentCourse.createMany({
+        data: studentCourseData,
+        skipDuplicates: true
+      });
     }
 
     // 5. Handle StudentAvailability relationships
