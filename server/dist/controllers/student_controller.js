@@ -22,7 +22,6 @@ const insertManyStudents = async (request, response) => {
 };
 exports.insertManyStudents = insertManyStudents;
 const callCreate = async (students) => {
-    console.log("Changing?");
     try {
         // 1. Handle Courses
         const uniqueCourses = new Set(students.flatMap(student => student.courses));
@@ -42,6 +41,7 @@ const callCreate = async (students) => {
                     course_code: code,
                     course_name: code,
                 })),
+                skipDuplicates: true
             });
         }
         // 2. Handle Availabilities
@@ -72,6 +72,7 @@ const callCreate = async (students) => {
         if (newAvailabilities.length > 0) {
             await prismaClient_1.default.availability.createMany({
                 data: newAvailabilities,
+                skipDuplicates: true
             });
         }
         // Get all availabilities after creation to have their IDs
@@ -141,6 +142,7 @@ const callCreate = async (students) => {
                     preferred_pronouns: student.preferred_pronouns,
                     year_level: student.year_level,
                 })),
+                skipDuplicates: true
             });
             // Get the created students to have their IDs
             const newlyCreatedStudents = await prismaClient_1.default.student.findMany({
@@ -190,6 +192,7 @@ const callCreate = async (students) => {
         if (studentCourseData.length > 0) {
             await prismaClient_1.default.studentCourse.createMany({
                 data: studentCourseData,
+                skipDuplicates: true
             });
         }
         // 5. Handle StudentAvailability relationships
@@ -214,6 +217,7 @@ const callCreate = async (students) => {
         if (studentAvailabilityData.length > 0) {
             await prismaClient_1.default.studentAvailability.createMany({
                 data: studentAvailabilityData,
+                skipDuplicates: true
             });
         }
     }
