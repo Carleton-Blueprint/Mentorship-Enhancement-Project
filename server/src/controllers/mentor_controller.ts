@@ -131,7 +131,7 @@ function validateMentors(mentors: Prisma.MentorCreateInput[]): string[] {
 
 const addAvailability = async (mentor_data: any[]) => {
   try {
-    // 1. First ensure all mentors exist
+    // 1. First check which mentors exist and which need to be created
     const mentorIds = mentor_data.map((data) => parseInt(data["Student ID"]));
     const existingMentors = await prisma.mentor.findMany({
       where: {
@@ -143,66 +143,66 @@ const addAvailability = async (mentor_data: any[]) => {
       },
     });
 
-    const mentorIdToDbId = new Map(
-      existingMentors.map((m) => [m.mentor_id, m.id])
+    const existingMentorIds = new Set(existingMentors.map((m) => m.mentor_id));
+
+    // Separate mentors into new and existing
+    const mentorsToCreate = mentor_data.filter(
+      (data) => !existingMentorIds.has(parseInt(data["Student ID"]))
+    );
+    const mentorsToUpdate = mentor_data.filter((data) =>
+      existingMentorIds.has(parseInt(data["Student ID"]))
     );
 
-    // 2. Process all availabilities
-    const availabilityData = mentor_data.flatMap((data) =>
-      Object.entries(data.availability as Record<string, string[]>).flatMap(([day, timeSlots]) =>
-        timeSlots.map((slot) => {
-          const timeRange = cleanTimeSlot(slot);
-          const [startTime, endTime] = timeRange.split(" to ");
-          return {
-            day,
-            start_time: convertTimeStringToDate(startTime),
-            end_time: convertTimeStringToDate(endTime),
-          };
-        })
-      )
-    );
-
-    // 3. Create or get all availabilities
-    const existingAvailabilities = await prisma.availability.findMany({
-      where: {
-        OR: availabilityData.map((avail) => ({
-          AND: {
-            day: avail.day,
-            start_time: avail.start_time,
-            end_time: avail.end_time,
-          },
+    // Create new mentors if needed
+    if (mentorsToCreate.length > 0) {
+      await prisma.mentor.createMany({
+        data: mentorsToCreate.map((data) => ({
+          mentor_id: parseInt(data["Student ID"]),
+          name: data["Full Name"],
+          email_address: data["Email Address"],
+          Program: data.Program,
+          year: data.Year,
         })),
-      },
-      select: {
-        id: true,
-        day: true,
-        start_time: true,
-        end_time: true,
-      },
-    });
-
-    const existingAvailabilityKeys = new Set(
-      existingAvailabilities.map(
-        (a) =>
-          `${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`
-      )
-    );
-
-    const newAvailabilities = availabilityData.filter(
-      (a) =>
-        !existingAvailabilityKeys.has(
-          `${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`
-        )
-    );
-
-    if (newAvailabilities.length > 0) {
-      await prisma.availability.createMany({
-        data: newAvailabilities,
         skipDuplicates: true,
       });
     }
 
-    // 4. Get all availabilities after creation
+    // Get all mentor IDs after creation
+    const allMentors = await prisma.mentor.findMany({
+      where: {
+        mentor_id: { in: mentorIds },
+      },
+      select: {
+        id: true,
+        mentor_id: true,
+      },
+    });
+
+    const mentorIdToDbId = new Map(allMentors.map((m) => [m.mentor_id, m.id]));
+
+    // 2. Process all availabilities
+    const availabilityData = mentor_data.flatMap((data) =>
+      Object.entries(data.availability as Record<string, string[]>).flatMap(
+        ([day, timeSlots]) =>
+          timeSlots.map((slot) => {
+            const timeRange = cleanTimeSlot(slot);
+            const [startTime, endTime] = timeRange.split(" to ");
+            return {
+              day,
+              start_time: convertTimeStringToDate(startTime),
+              end_time: convertTimeStringToDate(endTime),
+            };
+          })
+      )
+    );
+
+    // Create new availabilities
+    await prisma.availability.createMany({
+      data: availabilityData,
+      skipDuplicates: true,
+    });
+
+    // Get all availabilities
     const allAvailabilities = await prisma.availability.findMany({
       where: {
         OR: availabilityData.map((avail) => ({
@@ -223,32 +223,33 @@ const addAvailability = async (mentor_data: any[]) => {
       ])
     );
 
-    // 5. Create mentor-availability connections
+    // 3. Create mentor-availability connections
     const mentorAvailabilityData = mentor_data
       .flatMap((data) =>
-        Object.entries(data.availability as Record<string, unknown[]>).flatMap(([day, timeSlots]) =>
-          timeSlots.map((slot: unknown) => {
-            const timeRange = cleanTimeSlot(slot as string);
-            const [startTime, endTime] = timeRange.split(" to ");
-            const availKey = `${day}-${convertTimeStringToDate(
-              startTime
-            ).toISOString()}-${convertTimeStringToDate(endTime).toISOString()}`;
-            return {
-              mentor_id: mentorIdToDbId.get(parseInt(data["Student ID"])),
-              availability_id: availabilityLookup.get(availKey),
-            };
-          })
+        Object.entries(data.availability as Record<string, unknown[]>).flatMap(
+          ([day, timeSlots]) =>
+            timeSlots.map((slot: unknown) => {
+              const timeRange = cleanTimeSlot(slot as string);
+              const [startTime, endTime] = timeRange.split(" to ");
+              const availKey = `${day}-${convertTimeStringToDate(
+                startTime
+              ).toISOString()}-${convertTimeStringToDate(
+                endTime
+              ).toISOString()}`;
+              return {
+                mentor_id: mentorIdToDbId.get(parseInt(data["Student ID"])),
+                availability_id: availabilityLookup.get(availKey),
+              };
+            })
         )
       )
       .filter((data) => data.mentor_id != null && data.availability_id != null);
 
-    // Bulk create mentor-availability connections
-    if (mentorAvailabilityData.length > 0) {
-      await prisma.mentorAvailability.createMany({
-        data: mentorAvailabilityData,
-        skipDuplicates: true,
-      });
-    }
+    // Create all mentor-availability connections
+    await prisma.mentorAvailability.createMany({
+      data: mentorAvailabilityData,
+      skipDuplicates: true,
+    });
   } catch (error) {
     console.error("Error in addAvailability:", error);
     throw error;
