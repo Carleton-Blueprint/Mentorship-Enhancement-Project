@@ -103,7 +103,7 @@ function validateMentors(mentors) {
         if(typeof(mentor.mentor_id) !== "number") {
           errors.push('Mentor id must be a number')
         }
-
+    
         if (mentor.MentorAvailability) {
           errors.push('Must indicate mentor availibility')
         }*/
@@ -270,96 +270,55 @@ const addAvailability = async (mentor_data) => {
     }
 };
 const callCreate = async (mentors) => {
-    for (const mentor of mentors) {
-        // console.log("mentor XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", mentor);
-        for (const course of mentor.courses) {
-            await prismaClient_1.default.course.upsert({
-                where: { course_code: course },
-                create: {
-                    course_code: course,
-                    course_name: course,
-                },
-                update: {},
+    try {
+        // 1. Process all courses first
+        const allCourses = new Set(mentors.flatMap((mentor) => mentor.courses || []));
+        // Create courses if they don't exist
+        if (allCourses.size > 0) {
+            await prismaClient_1.default.course.createMany({
+                data: Array.from(allCourses).map((code) => ({
+                    course_code: code,
+                    course_name: code,
+                })),
+                skipDuplicates: true,
             });
         }
-        console.log("Processing mentor:", mentor.mentor_id);
-        // Create or update mentor
-        const createdMentor = await prismaClient_1.default.mentor.upsert({
-            where: {
-                mentor_id: mentor.mentor_id,
-            },
-            update: {
-                // Update only provided fields, preserve existing ones
-                ...(mentor.name && { name: mentor.name }),
-                ...(mentor.email_address && { email_address: mentor.email_address }),
-                ...(mentor.program && { Program: mentor.program }),
-                ...(mentor.year && { year: mentor.year }),
-                // If courses provided, update courses
-                ...(mentor.courses?.length > 0 && {
+        // 2. Create or update mentors
+        for (const mentor of mentors) {
+            await prismaClient_1.default.mentor.upsert({
+                where: {
+                    mentor_id: mentor.mentor_id,
+                },
+                create: {
+                    mentor_id: mentor.mentor_id,
+                    name: mentor.name,
+                    email_address: mentor.email_address,
+                    Program: mentor.program,
+                    year: mentor.year,
                     MentorCourse: {
-                        deleteMany: {},
-                        create: mentor.courses.map((course) => ({
+                        create: (mentor.courses || []).map((course) => ({
                             course: { connect: { course_code: course } },
                         })),
                     },
-                }),
-                // If availability provided, update availability
-                ...(Object.keys(mentor.availability || {}).length > 0 && {
-                    MentorAvailability: {
-                        deleteMany: {},
-                        create: Object.entries(mentor.availability).flatMap(([day, slots]) => slots.map((slot) => {
-                            const cleanedSlot = cleanTimeSlot(slot);
-                            const [startTime, endTime] = cleanedSlot.split(" to ");
-                            return {
-                                availability: {
-                                    connect: {
-                                        unique_avail: {
-                                            day,
-                                            start_time: convertTimeStringToDate(startTime),
-                                            end_time: convertTimeStringToDate(endTime),
-                                        },
-                                    },
-                                },
-                            };
-                        })),
-                    },
-                }),
-            },
-            create: {
-                mentor_id: mentor.mentor_id,
-                name: mentor.name,
-                email_address: mentor.email_address,
-                Program: mentor.program,
-                year: mentor.year,
-                ...(mentor.courses?.length > 0 && {
+                },
+                update: {
+                    name: mentor.name,
+                    email_address: mentor.email_address,
+                    Program: mentor.program,
+                    year: mentor.year,
                     MentorCourse: {
-                        create: mentor.courses.map((course) => ({
+                        deleteMany: {},
+                        create: (mentor.courses || []).map((course) => ({
                             course: { connect: { course_code: course } },
                         })),
                     },
-                }),
-                ...(Object.keys(mentor.availability || {}).length > 0 && {
-                    MentorAvailability: {
-                        create: Object.entries(mentor.availability).flatMap(([day, slots]) => slots.map((slot) => {
-                            const cleanedSlot = cleanTimeSlot(slot);
-                            const [startTime, endTime] = cleanedSlot.split(" to ");
-                            return {
-                                availability: {
-                                    connect: {
-                                        unique_avail: {
-                                            day,
-                                            start_time: convertTimeStringToDate(startTime),
-                                            end_time: convertTimeStringToDate(endTime),
-                                        },
-                                    },
-                                },
-                            };
-                        })),
-                    },
-                }),
-            },
-        });
-        console.log("Mentor processed:", createdMentor.mentor_id);
+                },
+            });
+        }
+    }
+    catch (error) {
+        console.error("Error in callCreate:", error);
+        throw error;
     }
 };
 const callEditByID = async (mentor) => {
