@@ -22,6 +22,7 @@ export const insertManyStudents = async (request: any, response: any) => {
 };
 
 const callCreate = async (students: any[]) => {
+  console.log("Changing?")
   try {
     // 1. Handle Courses
     const uniqueCourses = new Set(students.flatMap(student => student.courses));
