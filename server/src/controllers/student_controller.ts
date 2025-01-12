@@ -67,6 +67,7 @@ const callCreate = async (students: any[]) => {
         }))
       },
       select: {
+        id: true,
         day: true,
         start_time: true,
         end_time: true,
@@ -88,6 +89,25 @@ const callCreate = async (students: any[]) => {
       });
     }
 
+    // Get all availabilities after creation to have their IDs
+    const allAvailabilities = await prisma.availability.findMany({
+      where: {
+        OR: availabilityData.map(avail => ({
+          day: avail.day,
+          start_time: avail.start_time,
+          end_time: avail.end_time,
+        }))
+      }
+    });
+
+    // Create availability lookup map for quick access
+    const availabilityLookup = new Map(
+      allAvailabilities.map(a => [
+        `${a.day}-${a.start_time.toISOString()}-${a.end_time.toISOString()}`,
+        a.id
+      ])
+    );
+
     // 3. Handle Students
     const studentIds = students.map(s => s.student_id);
     const existingStudents = await prisma.student.findMany({
@@ -96,25 +116,23 @@ const callCreate = async (students: any[]) => {
           in: studentIds
         }
       },
-      include: {
-        StudentCourse: true,
-        StudentAvailability: {
-          include: {
-            availability: true
-          }
-        }
+      select: {
+        id: true,
+        student_id: true
       }
     });
 
     const existingStudentIds = new Set(existingStudents.map(s => s.student_id));
+    const studentIdToDbId = new Map(existingStudents.map(s => [s.student_id, s.id]));
     
     // Separate students into new and existing
     const studentsToCreate = students.filter(s => !existingStudentIds.has(s.student_id));
     const studentsToUpdate = students.filter(s => existingStudentIds.has(s.student_id));
 
-    // Create new students with their relationships
+    // Create new students (base records only)
+    let createdStudents = [];
     if (studentsToCreate.length > 0) {
-      await prisma.$transaction(
+      createdStudents = await prisma.$transaction(
         studentsToCreate.map(student =>
           prisma.student.create({
             data: {
@@ -126,33 +144,13 @@ const callCreate = async (students: any[]) => {
               preferred_name: student.preferred_name,
               preferred_pronouns: student.preferred_pronouns,
               year_level: student.year_level,
-              StudentCourse: {
-                create: student.courses.map(course => ({
-                  course: { connect: { course_code: course } },
-                })),
-              },
-              StudentAvailability: {
-                create: student.availability.flatMap(avail =>
-                  avail.time_ranges.map(time => ({
-                    availability: {
-                      connect: {
-                        unique_avail: {
-                          day: avail.day,
-                          start_time: convertToDate(time.start_time),
-                          end_time: convertToDate(time.end_time),
-                        },
-                      },
-                    },
-                  }))
-                ),
-              },
             },
           })
         )
       );
     }
 
-    // Update existing students
+    // Update existing students (base records only)
     if (studentsToUpdate.length > 0) {
       await prisma.$transaction(
         studentsToUpdate.map(student =>
@@ -166,32 +164,75 @@ const callCreate = async (students: any[]) => {
               preferred_name: student.preferred_name,
               preferred_pronouns: student.preferred_pronouns,
               year_level: student.year_level,
-              StudentCourse: {
-                deleteMany: {},
-                create: student.courses.map(course => ({
-                  course: { connect: { course_code: course } },
-                })),
-              },
-              StudentAvailability: {
-                deleteMany: {},
-                create: student.availability.flatMap(avail =>
-                  avail.time_ranges.map(time => ({
-                    availability: {
-                      connect: {
-                        unique_avail: {
-                          day: avail.day,
-                          start_time: convertToDate(time.start_time),
-                          end_time: convertToDate(time.end_time),
-                        },
-                      },
-                    },
-                  }))
-                ),
-              },
             },
           })
         )
       );
+    }
+
+    // Add newly created students to the ID lookup
+    createdStudents.forEach(s => studentIdToDbId.set(s.student_id, s.id));
+
+    // 4. Handle StudentCourse relationships
+    // First, delete existing relationships for students being updated
+    if (studentsToUpdate.length > 0) {
+      await prisma.studentCourse.deleteMany({
+        where: {
+          student_id: {
+            in: studentsToUpdate.map(s => studentIdToDbId.get(s.student_id))
+          }
+        }
+      });
+    }
+
+    // Create all StudentCourse relationships
+    const studentCourseData = students.flatMap(student => 
+      student.courses.map(course => ({
+        student_id: studentIdToDbId.get(student.student_id),
+        course: { connect: { course_code: course } }
+      }))
+    );
+
+    if (studentCourseData.length > 0) {
+      await prisma.$transaction(
+        studentCourseData.map(data =>
+          prisma.studentCourse.create({
+            data: data
+          })
+        )
+      );
+    }
+
+    // 5. Handle StudentAvailability relationships
+    // First, delete existing relationships for students being updated
+    if (studentsToUpdate.length > 0) {
+      await prisma.studentAvailability.deleteMany({
+        where: {
+          student_id: {
+            in: studentsToUpdate.map(s => studentIdToDbId.get(s.student_id))
+          }
+        }
+      });
+    }
+
+    // Create all StudentAvailability relationships
+    const studentAvailabilityData = students.flatMap(student =>
+      student.availability.flatMap(avail =>
+        avail.time_ranges.map(time => {
+          const availKey = `${avail.day}-${convertToDate(time.start_time).toISOString()}-${convertToDate(time.end_time).toISOString()}`;
+          return {
+            student_id: studentIdToDbId.get(student.student_id),
+            availability_id: availabilityLookup.get(availKey)
+          };
+        })
+      )
+    );
+
+    if (studentAvailabilityData.length > 0) {
+      await prisma.studentAvailability.createMany({
+        data: studentAvailabilityData,
+        skipDuplicates: true
+      });
     }
 
   } catch (error) {
