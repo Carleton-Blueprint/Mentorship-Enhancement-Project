@@ -301,27 +301,26 @@ const callCreate = async (mentors) => {
         console.log("Found courses:", Array.from(allCourses));
         // Create courses if they don't exist
         if (allCourses.size > 0) {
+            // Create courses and get their IDs in a single transaction
             const result = await prismaClient_1.default.$transaction(async (tx) => {
-                const courseResult = await tx.course.createMany({
+                // Create courses
+                await tx.course.createMany({
                     data: Array.from(allCourses).map((code) => ({
                         course_code: code,
                         course_name: code,
                     })),
                     skipDuplicates: true,
                 });
-                console.log("Course creation result:", courseResult);
-                // Get created courses within the same transaction
-                const courses = await tx.course.findMany({
+                // Get all courses including newly created ones
+                return tx.course.findMany({
                     where: {
                         course_code: { in: Array.from(allCourses) },
                     },
                 });
-                return courses;
             });
-            console.log("Found existing courses:", result);
-            // Process each mentor
-            for (const mentor of mentors) {
-                await prismaClient_1.default.$transaction(async (tx) => {
+            // Process each mentor with their courses
+            await Promise.all(mentors.map(async (mentor) => {
+                return prismaClient_1.default.$transaction(async (tx) => {
                     // Create or update mentor
                     const createdMentor = await tx.mentor.upsert({
                         where: { mentor_id: mentor.mentor_id },
@@ -339,30 +338,32 @@ const callCreate = async (mentors) => {
                             year: mentor.year,
                         },
                     });
-                    // Create course connections
                     if (mentor.courses?.length) {
                         // Delete existing connections
                         await tx.mentorCourse.deleteMany({
                             where: { mentor_id: createdMentor.id },
                         });
                         // Create new connections
-                        await tx.mentorCourse.createMany({
-                            data: mentor.courses
-                                .map((course) => {
-                                const courseId = result.find((c) => c.course_code === course)?.id;
-                                return courseId
-                                    ? {
-                                        mentor_id: createdMentor.id,
-                                        course_id: courseId,
-                                    }
-                                    : null;
-                            })
-                                .filter((conn) => conn !== null),
-                            skipDuplicates: true,
-                        });
+                        const connections = mentor.courses
+                            .map((course) => {
+                            const courseId = result.find((c) => c.course_code === course)?.id;
+                            return courseId
+                                ? {
+                                    mentor_id: createdMentor.id,
+                                    course_id: courseId,
+                                }
+                                : null;
+                        })
+                            .filter((conn) => conn !== null);
+                        if (connections.length > 0) {
+                            await tx.mentorCourse.createMany({
+                                data: connections,
+                                skipDuplicates: true,
+                            });
+                        }
                     }
                 });
-            }
+            }));
         }
         console.log("Mentor creation completed successfully");
     }
