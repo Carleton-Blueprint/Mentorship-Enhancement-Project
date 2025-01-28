@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./App.css";
-import "./globals.css";
-import App from "./App";
+import "./css/App.css";
+import "./css/globals.css";
+import App from "../App";
 import createStore from "react-auth-kit/createStore";
 import  AuthProvider from "react-auth-kit";
 

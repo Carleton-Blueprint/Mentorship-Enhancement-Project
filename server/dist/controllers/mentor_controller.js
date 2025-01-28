@@ -97,20 +97,6 @@ function validateMentors(mentors) {
         if (!mentor.name) {
             errors.push(`Mentor at index ${index} does not have a first name.`);
         }
-        /*
-        if (!mentor.mentor_id) {
-          errors.push("Mentor id is necessary");
-        }
-        if(typeof(mentor.mentor_id) !== "number") {
-          errors.push('Mentor id must be a number')
-        }
-    
-        if (mentor.MentorAvailability) {
-          errors.push('Must indicate mentor availibility')
-        }*/
-        // if (!mentor.program) {
-        //   errors.push('Must enter current program of education')
-        // }
     });
     return errors;
 }
@@ -390,19 +376,7 @@ const callEditByID = async (mentor) => {
             });
         }
     }
-    // probably won't work
-    // const availabilityCreates = [];
-    // for (const [day, slots] of Object.entries(mentor.availability as MentorAvailability)) {
-    //   for (const slot of slots) {
-    //     const cleanedSlot = cleanTimeSlot(slot);
-    //     const [startTime, endTime] = cleanedSlot.split(" to ");
-    //     availabilityCreates.push({
-    //       day: day,
-    //       start_time: startTime,
-    //       end_time: endTime
-    //     });
-    //   }
-    // }
+
     const updatedMentors = await prismaClient_1.default.mentor.upsert({
         where: { mentor_id: mentor.id },
         update: {},
@@ -417,9 +391,6 @@ const callEditByID = async (mentor) => {
                     course: { connect: { course_code: course } },
                 })),
             },
-            // MentorAvailability: {
-            //     create: availabilityCreates,
-            // },
         },
     });
 };
