@@ -122,6 +122,6 @@
     }
   },
   // "include": ["src/**/*"],
-  "include": ["*/*"],
+  "include": ["*/*", "src/js/index.js"],
   "exclude": ["node_modules"]
 }

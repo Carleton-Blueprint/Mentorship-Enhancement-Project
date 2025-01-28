@@ -2,7 +2,7 @@ import axios from "axios";
 import Papa from "papaparse";
 import DeletePopUp from "./deletePopUp";
 import React, { useState } from "react";
-import "./App.css";
+import "./css/App.css";
 import { Button } from "./components/ui/button";
 import {
   Table,
@@ -62,13 +62,6 @@ export const AddTimeslots = () => {
     setFileName(event.target.files[0].name);
   };
 
-  // const isTimeSlotHeader = (header: string): boolean => {
-  //   // Check if header matches pattern like "10:00am to 10:30am"
-  //   const timeSlotPattern =
-  //     /^\d{1,2}:\d{2}(?:am|pm) to \d{1,2}:\d{2}(?:am|pm)$/i;
-  //   return timeSlotPattern.test(header);
-  // };
-
   var csvParse = async (e: any) => {
     e.preventDefault();
 
@@ -83,10 +76,6 @@ export const AddTimeslots = () => {
           console.log("parsed results", results);
           const rows: any[] = results.data as any[];
           console.log(rows);
-          // Check if the last row is empty and remove it
-          // if (rows.length > 0 && Object.values(rows[rows.length - 1]).every(value => value === "")) {
-          //   rows.pop(); // Remove the last row if it's empty
-          // }
 
           const result: {
             availability: { [key: string]: string[] };
@@ -145,27 +134,11 @@ export const AddTimeslots = () => {
                 console.log(new_row["availability"]);
               }
             }
-            //  else {
-            //       row["courses"] = [];
-            //       for (let i = 5; i < headers.length; i++) {
-            //         const courseName = headers[i];
-            //         if (
-            //           row[courseName] === "Yes" ||
-            //           row[courseName] === "In Progress"
-            //         ) {
-            //           row["courses"].push(courseName);
-            //         }
-            //       }
-            //     }
 
             result.push(new_row);
           });
           console.log("rows", rows);
           const toSend = result;
-          // console.log(
-          //   "Data interpretation:",
-          //   isTimeSlotData ? "Timeslot format" : "Course format"
-          // );
           console.log("toSend.slice(0, 5)", toSend.slice(0, 5));
 
           setData(toSend as Mentor[]);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './deletePopUp.css';
+import './css/deletePopUp.css';
 
 interface DeletePopUpProps {
   handleDelete: (e: any) => Promise<void>;

@@ -7,10 +7,6 @@ exports.addCourse = void 0;
 const prismaClient_1 = __importDefault(require("../prismaClient"));
 const addCourse = async (request, response) => {
     const data = request.body.data;
-    // const validationErrors = validateMentors(mentors);
-    // if (validationErrors.length > 0) {
-    //   return response.status(400).json({ error: 'Validation error', details: validationErrors });
-    // }
     try {
         const createdCourse = await callCreateCourse(data.courses);
         response

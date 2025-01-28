@@ -7,9 +7,7 @@ exports.addDateRange = void 0;
 const prismaClient_1 = __importDefault(require("../prismaClient"));
 const addDateRange = async (request, response) => {
     const data = request.body.data;
-    // if (validationErrors.length > 0) {
-    //   return response.status(400).json({ error: 'Validation error', details: validationErrors });
-    // }
+
     try {
         const createdDateRange = callCreateDateRange(data.dates);
         response

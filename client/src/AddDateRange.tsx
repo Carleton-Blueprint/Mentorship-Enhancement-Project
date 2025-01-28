@@ -107,9 +107,6 @@ export const AddDateRange = () => {
                       onSelect={(date) => {
                         field.onChange(date);
                       }}
-                      // disabled={(date) =>
-                      //   date > new Date() || date < new Date("1900-01-01")
-                      // }
                       initialFocus
                     />
                   </PopoverContent>
@@ -150,9 +147,6 @@ export const AddDateRange = () => {
                       onSelect={(date) => {
                         field.onChange(date);
                       }}
-                      // disabled={(date) =>
-                      //   date > new Date() || date < new Date("1900-01-01")
-                      // }
                       initialFocus
                     />
                   </PopoverContent>

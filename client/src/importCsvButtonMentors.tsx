@@ -2,7 +2,7 @@ import axios from "axios";
 import Papa from "papaparse";
 import DeletePopUp from './deletePopUp';
 import React, { useState } from "react";
-import "./App.css";
+import "./css/App.css";
 import { Button } from "./components/ui/button";
 import { Table, TableRow, TableHead, TableHeader, TableBody, TableCell } from "./components/ui/table";
 
