@@ -410,7 +410,7 @@ const callCreate = async (mentors: MentorData[]) => {
       });
 
       // Process each mentor with their courses
-      await Promise.all(
+      const createdMentors = await Promise.all(
         mentors.map(async (mentor) => {
           return prisma.$transaction(async (tx) => {
             // Create or update mentor
@@ -430,9 +430,12 @@ const callCreate = async (mentors: MentorData[]) => {
                 year: mentor.year,
               },
             });
+            console.log("createdMentor", createdMentor);
 
             if (mentor.courses?.length) {
               // Delete existing connections
+              console.log("deleting existing connections");
+              console.log("mentor.courses", mentor.courses);
               await tx.mentorCourse.deleteMany({
                 where: { mentor_id: createdMentor.id },
               });
@@ -462,9 +465,14 @@ const callCreate = async (mentors: MentorData[]) => {
                 });
               }
             }
+
+            return createdMentor; // Return the created mentor
           });
         })
       );
+
+      // Log all created mentors
+      console.log("Created Mentors:", createdMentors);
     }
 
     console.log("Mentor creation completed successfully");
