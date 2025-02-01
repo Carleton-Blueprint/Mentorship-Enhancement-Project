@@ -104,7 +104,7 @@ function validateMentors(mentors) {
         if(typeof(mentor.mentor_id) !== "number") {
           errors.push('Mentor id must be a number')
         }
-
+    
         if (mentor.MentorAvailability) {
           errors.push('Must indicate mentor availibility')
         }*/
@@ -295,7 +295,6 @@ const addAvailability = async (mentor_data) => {
 };
 const callCreate = async (mentors) => {
     try {
-        console.log("Starting mentor creation with data:", mentors);
         // 1. Handle Courses
         const uniqueCourses = new Set(mentors.flatMap((mentor) => mentor.courses));
         const existingCourses = await prismaClient_1.default.course.findMany({
