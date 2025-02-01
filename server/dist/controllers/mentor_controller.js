@@ -295,7 +295,6 @@ const addAvailability = async (mentor_data) => {
 };
 const callCreate = async (mentors) => {
     try {
-        console.log("Starting mentor creation with data:", mentors);
         // 1. Handle Courses
         const uniqueCourses = new Set(mentors.flatMap((mentor) => mentor.courses));
         const existingCourses = await prismaClient_1.default.course.findMany({
