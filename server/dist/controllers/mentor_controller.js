@@ -104,7 +104,7 @@ function validateMentors(mentors) {
         if(typeof(mentor.mentor_id) !== "number") {
           errors.push('Mentor id must be a number')
         }
-
+    
         if (mentor.MentorAvailability) {
           errors.push('Must indicate mentor availibility')
         }*/
