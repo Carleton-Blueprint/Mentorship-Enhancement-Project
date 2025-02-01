@@ -295,27 +295,29 @@ const addAvailability = async (mentor_data) => {
 };
 const callCreate = async (mentors) => {
     try {
-        // 1. Process all courses first
-        const allCourses = new Set(mentors.flatMap((mentor) => mentor.courses || []));
-        // Create courses if they don't exist
-        if (allCourses.size > 0) {
-            console.log("allCourses", allCourses);
-            // Create courses and get their IDs in a single transaction
-            const result = await prismaClient_1.default.$transaction(async (tx) => {
-                // Create courses
-                await tx.course.createMany({
-                    data: Array.from(allCourses).map((code) => ({
-                        course_code: code,
-                        course_name: code,
-                    })),
-                    skipDuplicates: true,
-                });
-                // Get all courses including newly created ones
-                return tx.course.findMany({
-                    where: {
-                        course_code: { in: Array.from(allCourses) },
-                    },
-                });
+        console.log("Starting mentor creation with data:", mentors);
+        // 1. Handle Courses
+        const uniqueCourses = new Set(mentors.flatMap((mentor) => mentor.courses));
+        const existingCourses = await prismaClient_1.default.course.findMany({
+            where: {
+                course_code: {
+                    in: Array.from(uniqueCourses),
+                },
+            },
+            select: {
+                id: true,
+                course_code: true,
+            },
+        });
+        const existingCourseCodes = new Set(existingCourses.map((c) => c.course_code));
+        const newCourses = Array.from(uniqueCourses).filter((code) => !existingCourseCodes.has(code));
+        if (newCourses.length > 0) {
+            await prismaClient_1.default.course.createMany({
+                data: newCourses.map((code) => ({
+                    course_code: code,
+                    course_name: code,
+                })),
+                skipDuplicates: true,
             });
         }
         // 2. Process each mentor
