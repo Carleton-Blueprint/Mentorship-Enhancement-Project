@@ -380,100 +380,98 @@ const addAvailability = async (mentor_data: any[]) => {
 
 const callCreate = async (mentors: MentorData[]) => {
   try {
+    console.log("Starting mentor creation with data:", mentors);
 
-    // 1. Process all courses first
-    const allCourses = new Set(
-      mentors.flatMap((mentor) => mentor.courses || [])
+    // 1. Handle Courses
+    const uniqueCourses = new Set(mentors.flatMap((mentor) => mentor.courses));
+    const existingCourses = await prisma.course.findMany({
+      where: {
+        course_code: {
+          in: Array.from(uniqueCourses),
+        },
+      },
+      select: {
+        id: true,
+        course_code: true,
+      },
+    });
+
+    const existingCourseCodes = new Set(
+      existingCourses.map((c) => c.course_code)
+    );
+    const newCourses = Array.from(uniqueCourses).filter(
+      (code) => !existingCourseCodes.has(code)
     );
 
-    // Create courses if they don't exist
-    if (allCourses.size > 0) {
-      console.log("allCourses", allCourses)
-      // Create courses and get their IDs in a single transaction
-      const result = await prisma.$transaction(async (tx) => {
-        // Create courses
-        await tx.course.createMany({
-          data: Array.from(allCourses).map((code) => ({
-            course_code: code,
-            course_name: code,
-          })),
-          skipDuplicates: true,
-        });
-
-        // Get all courses including newly created ones
-        return tx.course.findMany({
-          where: {
-            course_code: { in: Array.from(allCourses) },
-          },
-        });
+    if (newCourses.length > 0) {
+      await prisma.course.createMany({
+        data: newCourses.map((code) => ({
+          course_code: code,
+          course_name: code,
+        })),
+        skipDuplicates: true,
       });
-
-      // Process each mentor with their courses
-      const createdMentors = await Promise.all(
-        mentors.map(async (mentor) => {
-          return prisma.$transaction(async (tx) => {
-            // Create or update mentor
-            const createdMentor = await tx.mentor.upsert({
-              where: { mentor_id: mentor.mentor_id },
-              create: {
-                mentor_id: mentor.mentor_id,
-                name: mentor.name,
-                email_address: mentor.email_address,
-                Program: mentor.program,
-                year: mentor.year,
-              },
-              update: {
-                name: mentor.name,
-                email_address: mentor.email_address,
-                Program: mentor.program,
-                year: mentor.year,
-              },
-            });
-            console.log("createdMentor", createdMentor);
-
-            if (mentor.courses?.length) {
-              // Delete existing connections
-              console.log("deleting existing connections");
-              console.log("mentor.courses", mentor.courses);
-              await tx.mentorCourse.deleteMany({
-                where: { mentor_id: createdMentor.id },
-              });
-
-              // Create new connections
-              const connections = mentor.courses
-                .map((course) => {
-                  const courseId = result.find(
-                    (c) => c.course_code === course
-                  )?.id;
-                  return courseId
-                    ? {
-                        mentor_id: createdMentor.id,
-                        course_id: courseId,
-                      }
-                    : null;
-                })
-                .filter(
-                  (conn): conn is { mentor_id: number; course_id: number } =>
-                    conn !== null
-                );
-
-              if (connections.length > 0) {
-                await tx.mentorCourse.createMany({
-                  data: connections,
-                  skipDuplicates: true,
-                });
-              }
-            }
-
-            return createdMentor; // Return the created mentor
-          });
-        })
-      );
-
-      // Log all created mentors
-      console.log("Created Mentors:", createdMentors);
     }
 
+    // 2. Process each mentor
+    const createdMentors = await Promise.all(
+      mentors.map(async (mentor) => {
+        const createdMentor = await prisma.mentor.upsert({
+          where: { mentor_id: mentor.mentor_id },
+          create: {
+            mentor_id: mentor.mentor_id,
+            name: mentor.name,
+            email_address: mentor.email_address,
+            Program: mentor.program,
+            year: mentor.year,
+          },
+          update: {
+            name: mentor.name,
+            email_address: mentor.email_address,
+            Program: mentor.program,
+            year: mentor.year,
+          },
+        });
+
+        // Handle Mentor-Course relationships
+        if (mentor.courses?.length) {
+          // Delete existing connections
+          await prisma.mentorCourse.deleteMany({
+            where: { mentor_id: createdMentor.id },
+          });
+
+          // Create new connections
+          const connections = mentor.courses
+            .map((course) => {
+              const courseId = existingCourses.find(
+                (c) => c.course_code === course
+              )?.id;
+              return courseId
+                ? {
+                    mentor_id: createdMentor.id,
+                    course_id: courseId,
+                  }
+                : null;
+            })
+            .filter(
+              (conn): conn is { mentor_id: number; course_id: number } =>
+                conn !== null
+            );
+
+          if (connections.length > 0) {
+            await prisma.mentorCourse.createMany({
+              data: connections,
+              skipDuplicates: true,
+            });
+          }
+        }
+
+        return createdMentor; // Return the created mentor
+      })
+    );
+
+    // Log all created mentors
+    console.log("Created Mentors:", createdMentors);
     console.log("Mentor creation completed successfully");
   } catch (error) {
     console.error("Error in callCreate:", error);

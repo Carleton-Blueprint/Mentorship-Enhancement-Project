@@ -104,7 +104,7 @@ function validateMentors(mentors) {
         if(typeof(mentor.mentor_id) !== "number") {
           errors.push('Mentor id must be a number')
         }
-    
+
         if (mentor.MentorAvailability) {
           errors.push('Must indicate mentor availibility')
         }*/
@@ -317,59 +317,54 @@ const callCreate = async (mentors) => {
                     },
                 });
             });
-            // Process each mentor with their courses
-            const createdMentors = await Promise.all(mentors.map(async (mentor) => {
-                return prismaClient_1.default.$transaction(async (tx) => {
-                    // Create or update mentor
-                    const createdMentor = await tx.mentor.upsert({
-                        where: { mentor_id: mentor.mentor_id },
-                        create: {
-                            mentor_id: mentor.mentor_id,
-                            name: mentor.name,
-                            email_address: mentor.email_address,
-                            Program: mentor.program,
-                            year: mentor.year,
-                        },
-                        update: {
-                            name: mentor.name,
-                            email_address: mentor.email_address,
-                            Program: mentor.program,
-                            year: mentor.year,
-                        },
-                    });
-                    console.log("createdMentor", createdMentor);
-                    if (mentor.courses?.length) {
-                        // Delete existing connections
-                        console.log("deleting existing connections");
-                        console.log("mentor.courses", mentor.courses);
-                        await tx.mentorCourse.deleteMany({
-                            where: { mentor_id: createdMentor.id },
-                        });
-                        // Create new connections
-                        const connections = mentor.courses
-                            .map((course) => {
-                            const courseId = result.find((c) => c.course_code === course)?.id;
-                            return courseId
-                                ? {
-                                    mentor_id: createdMentor.id,
-                                    course_id: courseId,
-                                }
-                                : null;
-                        })
-                            .filter((conn) => conn !== null);
-                        if (connections.length > 0) {
-                            await tx.mentorCourse.createMany({
-                                data: connections,
-                                skipDuplicates: true,
-                            });
-                        }
-                    }
-                    return createdMentor; // Return the created mentor
-                });
-            }));
-            // Log all created mentors
-            console.log("Created Mentors:", createdMentors);
         }
+        // 2. Process each mentor
+        const createdMentors = await Promise.all(mentors.map(async (mentor) => {
+            const createdMentor = await prismaClient_1.default.mentor.upsert({
+                where: { mentor_id: mentor.mentor_id },
+                create: {
+                    mentor_id: mentor.mentor_id,
+                    name: mentor.name,
+                    email_address: mentor.email_address,
+                    Program: mentor.program,
+                    year: mentor.year,
+                },
+                update: {
+                    name: mentor.name,
+                    email_address: mentor.email_address,
+                    Program: mentor.program,
+                    year: mentor.year,
+                },
+            });
+            // Handle Mentor-Course relationships
+            if (mentor.courses?.length) {
+                // Delete existing connections
+                await prismaClient_1.default.mentorCourse.deleteMany({
+                    where: { mentor_id: createdMentor.id },
+                });
+                // Create new connections
+                const connections = mentor.courses
+                    .map((course) => {
+                    const courseId = existingCourses.find((c) => c.course_code === course)?.id;
+                    return courseId
+                        ? {
+                            mentor_id: createdMentor.id,
+                            course_id: courseId,
+                        }
+                        : null;
+                })
+                    .filter((conn) => conn !== null);
+                if (connections.length > 0) {
+                    await prismaClient_1.default.mentorCourse.createMany({
+                        data: connections,
+                        skipDuplicates: true,
+                    });
+                }
+            }
+            return createdMentor; // Return the created mentor
+        }));
+        // Log all created mentors
+        console.log("Created Mentors:", createdMentors);
         console.log("Mentor creation completed successfully");
     }
     catch (error) {
