@@ -295,12 +295,11 @@ const addAvailability = async (mentor_data) => {
 };
 const callCreate = async (mentors) => {
     try {
-        console.log("Starting mentor creation with data:", mentors);
         // 1. Process all courses first
         const allCourses = new Set(mentors.flatMap((mentor) => mentor.courses || []));
-        console.log("Found courses:", Array.from(allCourses));
         // Create courses if they don't exist
         if (allCourses.size > 0) {
+            console.log("allCourses", allCourses);
             // Create courses and get their IDs in a single transaction
             const result = await prismaClient_1.default.$transaction(async (tx) => {
                 // Create courses
