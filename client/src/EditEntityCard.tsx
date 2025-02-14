@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './App.css';
+import './css/App.css';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import {
@@ -128,8 +128,8 @@ const EditEntityCard: React.FC<EditEntityCardProps> = ({
   const lookupByID = async (entityID: z.infer<typeof EntityIDSchema>): Promise<string> => {
       try {
         // TODO
-        // const result = await axios.get(`${serverUrl}/students/getStudentByID`, { data: entityID });
-        const result: string = `{"availability":[[false,false,false,false,false,false,false,false,false,false,true,true],[false,true,false,false,true,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,true,false,false,false,false]],"courses":["COMP1405","COMP1406","MATH1107","GEOM2005"],"email":"john.doe@gmail.com","entityNumber":"123456789","firstName":"John","lastName":"Doe","major":"Computer Science","preferredName":"Bob","preferredPronouns":"they/them","yearLevel":"2"}`
+        const result: string = await axios.get(`${serverUrl}/students/getStudentByID`, { data: entityID });
+        //const result: string = `{"availability":[[false,false,false,false,false,false,false,false,false,false,true,true],[false,true,false,false,true,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,true,false,false,false,false]],"courses":["COMP1405","COMP1406","MATH1107","GEOM2005"],"email":"john.doe@gmail.com","entityNumber":"123456789","firstName":"John","lastName":"Doe","major":"Computer Science","preferredName":"Bob","preferredPronouns":"they/them","yearLevel":"2"}`
         return result;
       } catch (error) {
         console.log(error);
