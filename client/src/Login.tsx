@@ -17,6 +17,7 @@ import useSignIn from "react-auth-kit/hooks/useSignIn";
 
 const serverUrl = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
+console.log('serverURl', serverUrl)
 export const Login = ({setLoggedIn}: any) => {
   const signIn = useSignIn();
   const [loginEmail, setLoginEmail] = useState<string>("");
